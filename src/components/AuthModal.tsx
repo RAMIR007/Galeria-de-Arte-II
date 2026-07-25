@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Lock, Mail, UserCheck, LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import { X, Lock, Mail, UserCheck, LogIn, UserPlus, AlertCircle, KeyRound, ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { isSupabaseConfigured } from '@/lib/supabase/data';
 
@@ -12,7 +12,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
-  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
@@ -30,12 +30,18 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
     setErrorMsg('');
     setSuccessMsg('');
 
+    // Modo Simulación (Demo sin llaves de Supabase)
     if (!isLive) {
-      // Simulación en modo Mock
       setTimeout(() => {
         setLoading(false);
-        setSuccessMsg(`Sesión iniciada correctamente como (${email || 'demo@galeria.art'}) [Modo Simulación]`);
-        onAuthSuccess?.(email || 'demo@galeria.art');
+        if (authMode === 'reset') {
+          setSuccessMsg(`[Modo Simulación] Se ha enviado un enlace de recuperación al correo: ${email || 'usuario@galeria.art'}`);
+          return;
+        }
+
+        const targetEmail = email || 'contacto@galeriacubana.art';
+        setSuccessMsg(`Sesión iniciada correctamente como (${targetEmail}) [Modo Simulación]`);
+        onAuthSuccess?.(targetEmail);
         setTimeout(() => {
           onClose();
         }, 1200);
@@ -43,10 +49,24 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
       return;
     }
 
+    // Modo Supabase Real en la Nube
     try {
       const supabase = createClient();
 
-      if (isLoginMode) {
+      if (authMode === 'reset') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined,
+        });
+
+        if (error) {
+          setErrorMsg(error.message);
+        } else {
+          setSuccessMsg('Enlace de recuperación enviado. Revisa la bandeja de entrada de tu correo.');
+        }
+        return;
+      }
+
+      if (authMode === 'login') {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -75,7 +95,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         if (error) {
           setErrorMsg(error.message);
         } else {
-          setSuccessMsg('Registro recibido. Revisa tu correo o inicia sesión.');
+          setSuccessMsg('Registro recibido. Revisa tu correo electrónico para confirmar la cuenta.');
           if (data.user) {
             onAuthSuccess?.(data.user.email || email);
           }
@@ -102,10 +122,18 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
         {/* Modal Header */}
         <div className="text-center mb-6">
           <div className="inline-flex p-3 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 mb-3">
-            <Lock className="w-6 h-6" />
+            {authMode === 'reset' ? (
+              <KeyRound className="w-6 h-6" />
+            ) : (
+              <Lock className="w-6 h-6" />
+            )}
           </div>
           <h3 className="text-xl font-serif font-bold text-white">
-            {isLoginMode ? 'Acceso a la Plataforma' : 'Registro de Artistas & Gestores'}
+            {authMode === 'login'
+              ? 'Acceso a la Plataforma'
+              : authMode === 'signup'
+              ? 'Registro de Artistas & Gestores'
+              : 'Recuperar Contraseña'}
           </h3>
           <p className="text-xs text-slate-400 mt-1">
             Galería Virtual de Arte Cubano
@@ -116,7 +144,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
           <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <span>
-              <strong>Modo Demostración Activo:</strong> Puedes ingresar cualquier email para probar el inicio de sesión y la simulación de permisos.
+              <strong>Modo Demostración Activo:</strong> Puedes ingresar cualquier correo (ej: <code>contacto@galeriacubana.art</code> o <code>amelia@arte.cu</code>) y <strong>cualquier contraseña</strong> para ingresar inmediatamente.
             </span>
           </div>
         )}
@@ -136,7 +164,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
         {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLoginMode && (
+          {authMode === 'signup' && (
             <div>
               <label className="text-xs text-slate-400 block mb-1">Nombre Completo *</label>
               <div className="relative">
@@ -147,7 +175,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                  required={!isLoginMode}
+                  required={authMode === 'signup'}
                 />
               </div>
             </div>
@@ -159,7 +187,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="email"
-                placeholder="usuario@galeria.art"
+                placeholder="contacto@galeriacubana.art"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -168,20 +196,37 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Contraseña *</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                required
-              />
+          {authMode !== 'reset' && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-slate-400">Contraseña *</label>
+                {authMode === 'login' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('reset');
+                      setErrorMsg('');
+                      setSuccessMsg('');
+                    }}
+                    className="text-[11px] text-amber-400 hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             type="submit"
@@ -190,34 +235,53 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
           >
             {loading ? (
               <span>Procesando...</span>
-            ) : isLoginMode ? (
+            ) : authMode === 'login' ? (
               <>
                 <LogIn className="w-4 h-4" />
                 <span>Iniciar Sesión</span>
               </>
-            ) : (
+            ) : authMode === 'signup' ? (
               <>
                 <UserPlus className="w-4 h-4" />
-                <span>Crear Cuenta</span>
+                <span>Crear Cuenta de Artista</span>
+              </>
+            ) : (
+              <>
+                <KeyRound className="w-4 h-4" />
+                <span>Enviar Enlace de Recuperación</span>
               </>
             )}
           </button>
         </form>
 
         {/* Toggle Mode Footer */}
-        <div className="mt-6 pt-4 border-t border-white/10 text-center">
-          <button
-            onClick={() => {
-              setIsLoginMode(!isLoginMode);
-              setErrorMsg('');
-              setSuccessMsg('');
-            }}
-            className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors"
-          >
-            {isLoginMode
-              ? '¿Eres un nuevo artista o gestor? Regístrate aquí'
-              : '¿Ya tienes una cuenta registrada? Inicia sesión'}
-          </button>
+        <div className="mt-6 pt-4 border-t border-white/10 text-center space-y-2">
+          {authMode === 'reset' ? (
+            <button
+              onClick={() => {
+                setAuthMode('login');
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
+              className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center justify-center gap-1 mx-auto"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Volver a Iniciar Sesión</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setAuthMode((prev) => (prev === 'login' ? 'signup' : 'login'));
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
+              className="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors"
+            >
+              {authMode === 'login'
+                ? '¿Eres un nuevo artista o gestor? Regístrate aquí'
+                : '¿Ya tienes una cuenta registrada? Inicia sesión'}
+            </button>
+          )}
         </div>
       </div>
     </div>
