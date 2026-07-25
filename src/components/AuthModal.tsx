@@ -89,6 +89,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
             data: {
               nombre_completo: nombre,
             },
+            emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined,
           },
         });
 
