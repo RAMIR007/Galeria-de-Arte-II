@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Galería Virtual de Arte Cubano - Esquema de Base de Datos Base (Supabase Postgres)
+-- Galería Virtual de Arte Cubano - Esquema de Base de Datos para Producción (Supabase Postgres)
 -- ==============================================================================
 
 -- 1. Tabla de Artistas
@@ -42,6 +42,40 @@ CREATE TABLE IF NOT EXISTS public.contactos_plataforma (
     activo BOOLEAN NOT NULL DEFAULT true,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ==============================================================================
+-- Índices de Rendimiento para Búsquedas Rápidas
+-- ==============================================================================
+CREATE INDEX IF NOT EXISTS idx_obras_artista_id ON public.obras(artista_id);
+CREATE INDEX IF NOT EXISTS idx_obras_disponible ON public.obras(disponible);
+CREATE INDEX IF NOT EXISTS idx_obras_tecnica ON public.obras(tecnica);
+CREATE INDEX IF NOT EXISTS idx_artistas_contacto_directo ON public.artistas(contacto_directo);
+CREATE INDEX IF NOT EXISTS idx_artistas_user_id ON public.artistas(user_id);
+
+-- ==============================================================================
+-- Trigger de Autoregistro de Usuarios en 'artistas' al Crear Cuenta en Auth
+-- ==============================================================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.artistas (user_id, nombre, whatsapp_email_contacto, rol, contacto_directo)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'nombre_completo', split_part(NEW.email, '@', 1)),
+        NEW.email,
+        'artista',
+        false
+    )
+    ON CONFLICT DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger asociado
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ==============================================================================
 -- Habilitar Row Level Security (RLS)
@@ -99,7 +133,7 @@ CREATE POLICY "Usuarios autenticados pueden subir imágenes" ON storage.objects
     );
 
 -- ==============================================================================
--- Datos iniciales de prueba (Seed Data)
+-- Datos Iniciales de Prueba (Seed Data)
 -- ==============================================================================
 INSERT INTO public.contactos_plataforma (nombre_encargado, whatsapp_email, activo) VALUES
 ('Ramiro - Coordinación Galería', '+53 50000000 / contacto@galeriacubana.art', true),
