@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { Artista } from '@/types/database';
-import { ShieldCheck, MapPin, Sparkles, UserCheck } from 'lucide-react';
+import { ShieldCheck, MapPin, Sparkles, UserCheck, Edit3 } from 'lucide-react';
 import Image from 'next/image';
 
 interface ArtistSectionProps {
   artistas: Artista[];
+  onOpenDashboard?: (artista: Artista) => void;
 }
 
-export function ArtistSection({ artistas }: ArtistSectionProps) {
+export function ArtistSection({ artistas, onOpenDashboard }: ArtistSectionProps) {
   return (
     <section id="artistas" className="py-16 bg-[#07080b] border-t border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,7 +32,7 @@ export function ArtistSection({ artistas }: ArtistSectionProps) {
           {artistas.map((art) => (
             <div
               key={art.id}
-              className="bg-[#12141a] p-6 rounded-2xl border border-white/10 glass-card-hover flex flex-col justify-between"
+              className="bg-[#12141a] p-6 rounded-2xl border border-white/10 glass-card-hover flex flex-col justify-between group"
             >
               <div>
                 <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-2 border-amber-500/30 shadow-lg">
@@ -59,17 +60,29 @@ export function ArtistSection({ artistas }: ArtistSectionProps) {
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-white/5 text-center">
-                {art.contacto_directo ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    Contacto Directo Habilitado
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Gestión Asistida por Plataforma
-                  </span>
+              <div className="pt-4 border-t border-white/5 space-y-2 text-center">
+                <div>
+                  {art.contacto_directo ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Contacto Directo Habilitado
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Gestión Asistida por Plataforma
+                    </span>
+                  )}
+                </div>
+
+                {onOpenDashboard && (
+                  <button
+                    onClick={() => onOpenDashboard(art)}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-amber-500/10 text-slate-300 hover:text-amber-300 border border-white/10 hover:border-amber-500/30 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors mt-2"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Mi Dashboard ({art.nombre.split(' ')[0]})</span>
+                  </button>
                 )}
               </div>
             </div>

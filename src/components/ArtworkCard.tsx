@@ -2,15 +2,17 @@
 
 import React from 'react';
 import { Obra } from '@/types/database';
-import { ShieldCheck, Eye, Sparkles } from 'lucide-react';
+import { ShieldCheck, Eye, Sparkles, Heart } from 'lucide-react';
 import Image from 'next/image';
 
 interface ArtworkCardProps {
   obra: Obra;
   onSelect: (obra: Obra) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (obraId: string) => void;
 }
 
-export function ArtworkCard({ obra, onSelect }: ArtworkCardProps) {
+export function ArtworkCard({ obra, onSelect, isFavorite = false, onToggleFavorite }: ArtworkCardProps) {
   const isContactoDirecto = obra.artista?.contacto_directo ?? false;
   const mainImage = obra.imagenes[0] || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800';
 
@@ -45,6 +47,25 @@ export function ArtworkCard({ obra, onSelect }: ArtworkCardProps) {
             </span>
           )}
         </div>
+
+        {/* Botón de Favorito (Wishlist Heart) */}
+        {onToggleFavorite && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(obra.id);
+            }}
+            title={isFavorite ? 'Quitar de Favoritos' : 'Guardar en Favoritos'}
+            className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md border transition-all z-20 ${
+              isFavorite
+                ? 'bg-red-500/20 border-red-500/50 text-red-500 scale-110'
+                : 'bg-black/40 border-white/20 text-slate-300 hover:text-red-400 hover:scale-105'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+          </button>
+        )}
 
         {/* Quick view button */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-xs">

@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Artista, ContactoPlataforma, RolUsuario } from '@/types/database';
+import { Artista, Obra, ContactoPlataforma, RolUsuario } from '@/types/database';
+import { uploadImageToBucket } from '@/lib/supabase/storage';
+import { AuthModal } from './AuthModal';
 import {
   Shield,
   ToggleLeft,
@@ -19,10 +21,17 @@ import {
   Save,
   Palette,
   ShieldAlert,
+  Image as ImageIcon,
+  CheckCircle,
+  XCircle,
+  Upload,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 
 interface AdminPreviewPanelProps {
   artistas: Artista[];
+  obras: Obra[];
   platformContacts: ContactoPlataforma[];
   onToggleContactoDirecto: (artistaId: string) => void;
   onAddPlatformContact: (nombre: string, contacto: string, rol?: RolUsuario) => void;
@@ -39,10 +48,25 @@ interface AdminPreviewPanelProps {
   }) => void;
   onUpdateArtista?: (artistaId: string, updates: Partial<Artista>) => void;
   onDeleteArtista?: (artistaId: string) => void;
+  onAddObra?: (data: {
+    titulo: string;
+    artista_id: string;
+    tecnica?: string;
+    medidas?: string;
+    año?: number;
+    precio_referencia?: number;
+    disponible?: boolean;
+    imagenes?: string[];
+    descripcion?: string;
+  }) => void;
+  onUpdateObra?: (obraId: string, updates: Partial<Obra>) => void;
+  onDeleteObra?: (obraId: string) => void;
+  onToggleObraDisponibilidad?: (obraId: string) => void;
 }
 
 export function AdminPreviewPanel({
   artistas,
+  obras,
   platformContacts,
   onToggleContactoDirecto,
   onAddPlatformContact,
@@ -52,9 +76,15 @@ export function AdminPreviewPanel({
   onAddArtista,
   onUpdateArtista,
   onDeleteArtista,
+  onAddObra,
+  onUpdateObra,
+  onDeleteObra,
+  onToggleObraDisponibilidad,
 }: AdminPreviewPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<RolUsuario>('superadmin');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
   // Estado para gestión de equipo (Admins / Gestores)
   const [nuevoNombre, setNuevoNombre] = useState('');
@@ -69,6 +99,18 @@ export function AdminPreviewPanel({
   const [artistFoto, setArtistFoto] = useState('');
   const [artistContacto, setArtistContacto] = useState('');
   const [artistDirecto, setArtistDirecto] = useState(false);
+
+  // Estado para agregar nueva obra
+  const [showAddObra, setShowAddObra] = useState(false);
+  const [obraTitulo, setObraTitulo] = useState('');
+  const [obraArtistaId, setObraArtistaId] = useState('');
+  const [obraTecnica, setObraTecnica] = useState('');
+  const [obraMedidas, setObraMedidas] = useState('');
+  const [obraAño, setObraAño] = useState('');
+  const [obraPrecio, setObraPrecio] = useState('');
+  const [obraDisponible, setObraDisponible] = useState(true);
+  const [obraImagenUrl, setObraImagenUrl] = useState('');
+  const [obraDescripcion, setObraDescripcion] = useState('');
 
   // Estado para autogestión de perfil de artista (Rol: Artista)
   const [selectedArtistIdForEdit, setSelectedArtistIdForEdit] = useState<string>(
@@ -126,6 +168,90 @@ export function AdminPreviewPanel({
     }
   };
 
+  const handleAddObraSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetArtistaId = obraArtistaId || artistas[0]?.id;
+    if (obraTitulo.trim() && targetArtistaId) {
+      onAddObra?.({
+        titulo: obraTitulo,
+        artista_id: targetArtistaId,
+        tecnica: obraTecnica || 'Óleo sobre lienzo',
+        medidas: obraMedidas || '100 x 80 cm',
+        año: obraAño ? parseInt(obraAño, 10) : new Date().getFullYear(),
+        precio_referencia: obraPrecio ? parseFloat(obraPrecio) : undefined,
+        disponible: obraDisponible,
+        imagenes: obraImagenUrl ? [obraImagenUrl] : ['https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1000'],
+        descripcion: obraDescripcion,
+      });
+      setObraTitulo('');
+      setObraTecnica('');
+      setObraMedidas('');
+      setObraAño('');
+      setObraPrecio('');
+      setObraDisponible(true);
+      setObraImagenUrl('');
+      setObraDescripcion('');
+      setShowAddObra(false);
+    }
+  };
+
+  const handleArtistImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadedUrl = await uploadImageToBucket(file, 'artistas-imagenes');
+    if (uploadedUrl) {
+      setArtistFoto(uploadedUrl);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setArtistFoto(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleObraImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadedUrl = await uploadImageToBucket(file, 'obras-imagenes');
+    if (uploadedUrl) {
+      setObraImagenUrl(uploadedUrl);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setObraImagenUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditArtistImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadedUrl = await uploadImageToBucket(file, 'artistas-imagenes');
+    if (uploadedUrl) {
+      setEditFoto(uploadedUrl);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setEditFoto(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveArtistProfile = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedArtistToEdit) {
@@ -157,12 +283,35 @@ export function AdminPreviewPanel({
             </p>
           </div>
 
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all shrink-0"
-          >
-            {isOpen ? 'Ocultar Panel Admin' : 'Abrir Panel de Administración'}
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            {currentUserEmail ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300">
+                <span>Sesión: <strong>{currentUserEmail}</strong></span>
+                <button
+                  onClick={() => setCurrentUserEmail(null)}
+                  className="p-1 hover:text-white transition-colors"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-red-400" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-200 border border-white/10 hover:border-amber-500/50 hover:text-amber-300 transition-all flex items-center gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <span>Iniciar Sesión</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all"
+            >
+              {isOpen ? 'Ocultar Panel Admin' : 'Abrir Panel de Administración'}
+            </button>
+          </div>
         </div>
 
         {isOpen && (
@@ -277,14 +426,21 @@ export function AdminPreviewPanel({
                         </div>
 
                         <div>
-                          <label className="text-[11px] text-slate-400 block mb-1">Foto de Perfil (URL)</label>
-                          <input
-                            type="text"
-                            placeholder="https://..."
-                            value={artistFoto}
-                            onChange={(e) => setArtistFoto(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
-                          />
+                          <label className="text-[11px] text-slate-400 block mb-1">Foto de Perfil (URL o Archivo)</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="https://..."
+                              value={artistFoto}
+                              onChange={(e) => setArtistFoto(e.target.value)}
+                              className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                            />
+                            <label className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 text-xs cursor-pointer flex items-center gap-1 shrink-0">
+                              <Upload className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Subir</span>
+                              <input type="file" accept="image/*" onChange={handleArtistImageFileUpload} className="hidden" />
+                            </label>
+                          </div>
                         </div>
 
                         <div>
@@ -385,12 +541,223 @@ export function AdminPreviewPanel({
                   </div>
                 </div>
 
-                {/* Control 2: Platform Contacts / Admin Team */}
+                {/* Control 2: Gestión de Obras en el Catálogo */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-amber-400" />
+                      (2) Obras de Arte Registradas ({obras.length}):
+                    </h4>
+
+                    <button
+                      onClick={() => setShowAddObra(!showAddObra)}
+                      className="px-3 py-1.5 rounded-lg gold-button text-xs font-semibold flex items-center gap-1.5 shadow-md"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {showAddObra ? 'Cancelar Registro' : '+ Publicar Nueva Obra'}
+                    </button>
+                  </div>
+
+                  {/* Formulario Agregar Nueva Obra */}
+                  {showAddObra && (
+                    <form
+                      onSubmit={handleAddObraSubmit}
+                      className="mb-6 p-4 rounded-xl bg-slate-950/80 border border-amber-500/30 space-y-4 animate-fadeIn"
+                    >
+                      <h5 className="text-xs font-semibold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4" /> Registrar Nueva Pieza en el Catálogo
+                      </h5>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-1">Título de la Obra *</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: Trópico en Penumbra"
+                            value={obraTitulo}
+                            onChange={(e) => setObraTitulo(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-1">Artista Autor *</label>
+                          <select
+                            value={obraArtistaId}
+                            onChange={(e) => setObraArtistaId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                            required
+                          >
+                            <option value="">-- Seleccionar Artista --</option>
+                            {artistas.map((art) => (
+                              <option key={art.id} value={art.id}>
+                                {art.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-1">Técnica</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: Óleo sobre lienzo"
+                            value={obraTecnica}
+                            onChange={(e) => setObraTecnica(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-1">Dimensiones / Medidas</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: 120 x 90 cm"
+                            value={obraMedidas}
+                            onChange={(e) => setObraMedidas(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-1">Año de Creación</label>
+                          <input
+                            type="number"
+                            placeholder="2024"
+                            value={obraAño}
+                            onChange={(e) => setObraAño(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] text-slate-400 block mb-1">Precio Referencia (USD)</label>
+                          <input
+                            type="number"
+                            placeholder="Ej: 1500"
+                            value={obraPrecio}
+                            onChange={(e) => setObraPrecio(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] text-slate-400 block mb-1">Imagen Principal (URL o Subir Archivo)</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="https://..."
+                            value={obraImagenUrl}
+                            onChange={(e) => setObraImagenUrl(e.target.value)}
+                            className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                          <label className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 text-xs cursor-pointer flex items-center gap-1 shrink-0">
+                            <Upload className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Subir Archivo</span>
+                            <input type="file" accept="image/*" onChange={handleObraImageFileUpload} className="hidden" />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] text-slate-400 block mb-1">Descripción / Ficha Curatorial</label>
+                        <textarea
+                          rows={2}
+                          placeholder="Reseña conceptual o contexto de la obra..."
+                          value={obraDescripcion}
+                          onChange={(e) => setObraDescripcion(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={obraDisponible}
+                            onChange={(e) => setObraDisponible(e.target.checked)}
+                            className="accent-emerald-500 w-4 h-4 rounded cursor-pointer"
+                          />
+                          <span>Marcar como disponible para adquisición</span>
+                        </label>
+
+                        <button
+                          type="submit"
+                          className="px-5 py-2 rounded-lg gold-button text-xs font-semibold flex items-center gap-1.5 shadow-md"
+                        >
+                          <Plus className="w-4 h-4" /> Agregar Obra al Catálogo
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Lista de Obras */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                    {obras.map((obra) => (
+                      <div
+                        key={obra.id}
+                        className="p-3 rounded-xl bg-slate-900/80 border border-white/5 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-white/10 relative">
+                            <img
+                              src={obra.imagenes[0] || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1000'}
+                              alt={obra.titulo}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-medium text-white truncate">{obra.titulo}</h5>
+                            <span className="text-[11px] text-amber-400/90 block truncate">
+                              {obra.artista?.nombre || 'Artista'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">
+                              {obra.tecnica || 'Arte Cubano'} {obra.precio_referencia ? `• $${obra.precio_referencia} USD` : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => onToggleObraDisponibilidad?.(obra.id)}
+                            className={`px-2 py-1 rounded text-[11px] font-semibold border transition-colors flex items-center gap-1 ${
+                              obra.disponible
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : 'bg-slate-800 text-slate-400 border-slate-700'
+                            }`}
+                          >
+                            {obra.disponible ? (
+                              <>
+                                <CheckCircle className="w-3 h-3 text-emerald-400" /> Disponible
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3 text-slate-400" /> Reservada
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={() => onDeleteObra?.(obra.id)}
+                            title="Eliminar obra"
+                            className="p-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Control 3: Platform Contacts / Admin Team */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
                       <Users className="w-4 h-4 text-amber-400" />
-                      (2) Equipo de Gestión & Atención Oficial de la Plataforma:
+                      (3) Equipo de Gestión & Atención Oficial de la Plataforma:
                     </h4>
                     <span className="text-xs text-slate-400">
                       {platformContacts.length} miembro(s) registrados
@@ -660,6 +1027,13 @@ export function AdminPreviewPanel({
           </div>
         )}
       </div>
+
+      {/* Modal de Autenticación */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={(email) => setCurrentUserEmail(email)}
+      />
     </div>
   );
 }

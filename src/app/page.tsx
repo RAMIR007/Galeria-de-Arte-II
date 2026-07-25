@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MOCK_ARTISTAS, MOCK_OBRAS, MOCK_CONTACTOS_PLATAFORMA } from '@/lib/mockData';
 import { Artista, Obra, ContactoPlataforma, RolUsuario } from '@/types/database';
+import { fetchInitialData } from '@/lib/supabase/data';
 import { CatalogSection } from '@/components/CatalogSection';
 import { ArtistSection } from '@/components/ArtistSection';
 import { AdminPreviewPanel } from '@/components/AdminPreviewPanel';
-import { Sparkles, ArrowRight, ShieldCheck, Palette, Award } from 'lucide-react';
+import { ArtistDashboardModal } from '@/components/ArtistDashboardModal';
+import { Sparkles, ArrowRight, ShieldCheck, Palette, Award, UserCheck } from 'lucide-react';
 
 export default function Home() {
   const [artistas, setArtistas] = useState<Artista[]>(MOCK_ARTISTAS);
@@ -14,6 +16,19 @@ export default function Home() {
   const [platformContacts, setPlatformContacts] = useState<ContactoPlataforma[]>(
     MOCK_CONTACTOS_PLATAFORMA
   );
+  const [isLive, setIsLive] = useState(false);
+  const [activeArtistDashboard, setActiveArtistDashboard] = useState<Artista | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      const data = await fetchInitialData();
+      setArtistas(data.artistas);
+      setObras(data.obras);
+      setPlatformContacts(data.platformContacts);
+      setIsLive(data.isLive);
+    }
+    loadData();
+  }, []);
 
   // Handler para alternar contacto_directo de un artista
   const handleToggleContactoDirecto = (artistaId: string) => {
@@ -42,6 +57,13 @@ export default function Home() {
         return obra;
       })
     );
+
+    // Sincronizar estado de modal si está activo
+    if (activeArtistDashboard && activeArtistDashboard.id === artistaId) {
+      setActiveArtistDashboard((prev) =>
+        prev ? { ...prev, contacto_directo: !prev.contacto_directo } : null
+      );
+    }
   };
 
   // Handlers para agregar, editar y eliminar artistas
@@ -87,11 +109,67 @@ export default function Home() {
         return obra;
       })
     );
+
+    // Sincronizar modal activo
+    if (activeArtistDashboard && activeArtistDashboard.id === artistaId) {
+      setActiveArtistDashboard((prev) => (prev ? { ...prev, ...updates } : null));
+    }
   };
 
   const handleDeleteArtista = (artistaId: string) => {
     setArtistas((prev) => prev.filter((art) => art.id !== artistaId));
     setObras((prev) => prev.filter((obra) => obra.artista_id !== artistaId));
+    if (activeArtistDashboard?.id === artistaId) {
+      setActiveArtistDashboard(null);
+    }
+  };
+
+  // Handlers para CRUD de Obras
+  const handleAddObra = (data: {
+    titulo: string;
+    artista_id: string;
+    tecnica?: string;
+    medidas?: string;
+    año?: number;
+    precio_referencia?: number;
+    disponible?: boolean;
+    imagenes?: string[];
+    descripcion?: string;
+  }) => {
+    const autor = artistas.find((a) => a.id === data.artista_id);
+    const newObra: Obra = {
+      id: `obra-${Date.now()}`,
+      artista_id: data.artista_id,
+      titulo: data.titulo,
+      descripcion: data.descripcion || '',
+      tecnica: data.tecnica || 'Óleo sobre lienzo',
+      medidas: data.medidas || '100 x 80 cm',
+      año: data.año || new Date().getFullYear(),
+      precio_referencia: data.precio_referencia,
+      disponible: data.disponible ?? true,
+      imagenes: data.imagenes?.length ? data.imagenes : ['https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=1000'],
+      fecha_creacion: new Date().toISOString(),
+      artista: autor,
+    };
+    setObras((prev) => [newObra, ...prev]);
+  };
+
+  const handleUpdateObra = (obraId: string, updates: Partial<Obra>) => {
+    setObras((prev) =>
+      prev.map((obra) => (obra.id === obraId ? { ...obra, ...updates } : obra))
+    );
+  };
+
+  const handleDeleteObra = (obraId: string) => {
+    setObras((prev) => prev.filter((obra) => obra.id !== obraId));
+  };
+
+  const handleToggleObraDisponibilidad = (obraId: string) => {
+    setObras((prev) =>
+      prev.map((obra) =>
+        obra.id === obraId ? { ...obra, disponible: !obra.disponible } : obra
+      )
+    );
   };
 
   // Handlers para la gestión de equipo y contactos de plataforma
@@ -159,12 +237,15 @@ export default function Home() {
                 <ArrowRight className="w-4 h-4" />
               </a>
 
-              <a
-                href="#contacto-info"
-                className="px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-sm font-semibold transition-colors"
-              >
-                Modelo de Transparencia
-              </a>
+              {artistas.length > 0 && (
+                <button
+                  onClick={() => setActiveArtistDashboard(artistas[0])}
+                  className="px-6 py-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-sm font-semibold flex items-center gap-2 transition-all shadow-md"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Probar Dashboard de Artista</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -211,11 +292,15 @@ export default function Home() {
       />
 
       {/* Artist Showcase Section */}
-      <ArtistSection artistas={artistas} />
+      <ArtistSection
+        artistas={artistas}
+        onOpenDashboard={(art) => setActiveArtistDashboard(art)}
+      />
 
       {/* Admin Panel Simulator */}
       <AdminPreviewPanel
         artistas={artistas}
+        obras={obras}
         platformContacts={platformContacts}
         onToggleContactoDirecto={handleToggleContactoDirecto}
         onAddPlatformContact={handleAddPlatformContact}
@@ -225,7 +310,27 @@ export default function Home() {
         onAddArtista={handleAddArtista}
         onUpdateArtista={handleUpdateArtista}
         onDeleteArtista={handleDeleteArtista}
+        onAddObra={handleAddObra}
+        onUpdateObra={handleUpdateObra}
+        onDeleteObra={handleDeleteObra}
+        onToggleObraDisponibilidad={handleToggleObraDisponibilidad}
       />
+
+      {/* Modal de Dashboard de Artista Autenticado */}
+      {activeArtistDashboard && (
+        <ArtistDashboardModal
+          isOpen={!!activeArtistDashboard}
+          onClose={() => setActiveArtistDashboard(null)}
+          artista={activeArtistDashboard}
+          obras={obras}
+          onUpdateArtista={handleUpdateArtista}
+          onToggleContactoDirecto={handleToggleContactoDirecto}
+          onAddObra={handleAddObra}
+          onUpdateObra={handleUpdateObra}
+          onDeleteObra={handleDeleteObra}
+          onToggleObraDisponibilidad={handleToggleObraDisponibilidad}
+        />
+      )}
     </div>
   );
 }

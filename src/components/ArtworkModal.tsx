@@ -2,16 +2,36 @@
 
 import React, { useState } from 'react';
 import { Obra, ContactoPlataforma } from '@/types/database';
-import { X, CheckCircle, PhoneCall, Mail, Ruler, Calendar, DollarSign, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  X,
+  CheckCircle,
+  PhoneCall,
+  Mail,
+  Ruler,
+  Calendar,
+  DollarSign,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+} from 'lucide-react';
 import Image from 'next/image';
 
 interface ArtworkModalProps {
   obra: Obra | null;
   platformContacts: ContactoPlataforma[];
   onClose: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (obraId: string) => void;
 }
 
-export function ArtworkModal({ obra, platformContacts, onClose }: ArtworkModalProps) {
+export function ArtworkModal({
+  obra,
+  platformContacts,
+  onClose,
+  isFavorite = false,
+  onToggleFavorite,
+}: ArtworkModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!obra) return null;
@@ -31,32 +51,66 @@ export function ArtworkModal({ obra, platformContacts, onClose }: ArtworkModalPr
     }
   };
 
-  const getContactLink = () => {
+  const getWhatsAppLink = () => {
+    const artistaNombre = obra.artista?.nombre || 'Artista Cubano';
     if (isContactoDirecto && obra.artista?.whatsapp_email_contacto) {
       const contactInfo = obra.artista.whatsapp_email_contacto;
-      if (contactInfo.includes('@')) {
-        return `mailto:${contactInfo}?subject=Consulta sobre obra: ${encodeURIComponent(obra.titulo)}`;
+      if (!contactInfo.includes('@')) {
+        const cleanNum = contactInfo.replace(/[^0-9+]/g, '');
+        const text = `Hola ${artistaNombre}, vi tu obra "${obra.titulo}" (${obra.tecnica || 'Arte Cubano'}${obra.año ? `, ${obra.año}` : ''}) en la Galería Virtual de Arte Cubano. Me gustaría ponerme en contacto directo contigo para consultar su disponibilidad y adquisición.`;
+        return `https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`;
       }
-      const cleanNum = contactInfo.replace(/[^0-9+]/g, '');
-      return `https://wa.me/${cleanNum}?text=${encodeURIComponent(`Hola, me interesa la obra "${obra.titulo}" del artista ${obra.artista.nombre}.`)}`;
-    } else if (activePlatformContact) {
-      const cleanNum = activePlatformContact.whatsapp_email.replace(/[^0-9+]/g, '');
-      return `https://wa.me/${cleanNum}?text=${encodeURIComponent(`Hola Galería Cubana, deseo consultar la disponibilidad de "${obra.titulo}" por ${obra.artista?.nombre || 'el artista'}.`)}`;
     }
+
+    if (activePlatformContact) {
+      const cleanNum = activePlatformContact.whatsapp_email.replace(/[^0-9+]/g, '');
+      const gestorNombre = activePlatformContact.nombre_encargado;
+      const text = `Hola ${gestorNombre} (Galería Virtual de Arte Cubano), estoy interesado en recibir asistencia oficial para negociar y adquirir la obra "${obra.titulo}" del artista ${artistaNombre}.`;
+      return `https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`;
+    }
+
     return '#';
+  };
+
+  const getEmailLink = () => {
+    const artistaNombre = obra.artista?.nombre || 'Artista Cubano';
+    const subject = `Consulta sobre obra: ${obra.titulo} - Galería de Arte Cubano`;
+    const body = `Hola ${isContactoDirecto ? artistaNombre : 'Galería de Arte Cubano'},\n\nEstoy interesado(a) en obtener más detalles y disponibilidad de la obra "${obra.titulo}" (${obra.tecnica || 'Arte Cubano'}) por ${artistaNombre}.\n\nSaludos.`;
+
+    if (isContactoDirecto && obra.artista?.whatsapp_email_contacto?.includes('@')) {
+      return `mailto:${obra.artista.whatsapp_email_contacto}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    return `mailto:contacto@galeriacubana.art?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn overflow-y-auto">
       <div className="relative w-full max-w-4xl bg-[#12141a] border border-amber-500/20 rounded-2xl shadow-2xl overflow-hidden my-8 glass-card">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-slate-900/80 text-slate-300 hover:text-white hover:bg-amber-500/20 border border-white/10 flex items-center justify-center transition-all"
-          aria-label="Cerrar vista"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Action Header: Favorite + Close */}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          {onToggleFavorite && (
+            <button
+              onClick={() => onToggleFavorite(obra.id)}
+              title={isFavorite ? 'Quitar de Favoritos' : 'Guardar en Favoritos'}
+              className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${
+                isFavorite
+                  ? 'bg-red-500/20 border-red-500/50 text-red-500'
+                  : 'bg-slate-900/80 text-slate-300 hover:text-red-400 border-white/10'
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+            </button>
+          )}
+
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-slate-900/80 text-slate-300 hover:text-white hover:bg-amber-500/20 border border-white/10 flex items-center justify-center transition-all"
+            aria-label="Cerrar vista"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Gallery View Column */}
@@ -120,93 +174,87 @@ export function ArtworkModal({ obra, platformContacts, onClose }: ArtworkModalPr
               <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1">
                 {obra.titulo}
               </h2>
-
-              <p className="text-base text-amber-400/90 font-medium mb-4">
-                {obra.artista?.nombre || 'Artista Cubano'}
+              <p className="text-sm font-semibold text-amber-400 mb-4">
+                por {obra.artista?.nombre || 'Artista Cubano'}
               </p>
 
-              <p className="text-sm text-slate-300 leading-relaxed mb-6">
-                {obra.descripcion || 'Sin descripción disponible.'}
+              <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                {obra.descripcion ||
+                  'Pieza original autenticada. Creada por destacados artistas de las artes plásticas cubanas contemporáneas.'}
               </p>
 
-              {/* Specs */}
-              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-900/60 p-4 rounded-xl border border-white/5 mb-6">
-                {obra.medidas && (
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Ruler className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>
-                      <strong className="text-slate-400 block">Dimensiones</strong>
-                      {obra.medidas}
+              {/* Data Grid */}
+              <div className="grid grid-cols-2 gap-3 p-4 rounded-xl bg-slate-900/60 border border-white/5 text-xs mb-6">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Ruler className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Dimensiones</span>
+                    <span className="font-medium">{obra.medidas || 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Año</span>
+                    <span className="font-medium">{obra.año || 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className="col-span-2 flex items-center gap-2 text-slate-300 pt-2 border-t border-white/5">
+                  <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Precio de Referencia</span>
+                    <span className="font-semibold text-emerald-400 text-sm">
+                      {obra.precio_referencia
+                        ? `$${obra.precio_referencia.toLocaleString()} USD`
+                        : 'Consultar directamente'}
                     </span>
                   </div>
-                )}
-                {obra.año && (
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <Calendar className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>
-                      <strong className="text-slate-400 block">Año</strong>
-                      {obra.año}
-                    </span>
-                  </div>
-                )}
-                {obra.precio_referencia && (
-                  <div className="col-span-2 flex items-center gap-2 text-slate-300 pt-2 border-t border-white/5">
-                    <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>
-                      <strong className="text-slate-400 block">Precio de referencia</strong>
-                      <span className="text-base font-semibold text-emerald-400">
-                        ${obra.precio_referencia.toLocaleString()} USD
-                      </span>
-                    </span>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
 
-            {/* Smart Contact Banner & Button */}
+            {/* Contact Action Footer */}
             <div className="space-y-3 pt-4 border-t border-white/10">
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-slate-300 flex items-start gap-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Modalidad de contacto:</span>
                 {isContactoDirecto ? (
-                  <>
-                    <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-emerald-300 block mb-0.5">Contacto Directo Habilitado</strong>
-                      <span>
-                        Al pulsar contactar, te comunicarás directamente con el artista ({obra.artista?.nombre}).
-                      </span>
-                    </div>
-                  </>
+                  <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Trato Directo con Artista
+                  </span>
                 ) : (
-                  <>
-                    <PhoneCall className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-amber-300 block mb-0.5">Gestión Asistida por Plataforma</strong>
-                      <span>
-                        El equipo de la plataforma ({activePlatformContact?.nombre_encargado || 'Ramiro y equipo'}) gestiona las consultas y la negociación para comodidad de los clientes y artistas.
-                      </span>
-                    </div>
-                  </>
+                  <span className="text-amber-300 font-semibold">
+                    Atención Asistida por Galería
+                  </span>
                 )}
               </div>
 
-              <a
-                href={getContactLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-6 rounded-xl gold-button flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                {isContactoDirecto ? (
-                  <>
-                    <Mail className="w-4 h-4" />
-                    <span>Contactar al Artista Directamente</span>
-                  </>
-                ) : (
-                  <>
-                    <PhoneCall className="w-4 h-4" />
-                    <span>Consultar Disponibilidad con Plataforma</span>
-                  </>
-                )}
-              </a>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href={getWhatsAppLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3.5 px-4 rounded-xl gold-button flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all text-xs font-semibold"
+                >
+                  <PhoneCall className="w-4 h-4" />
+                  <span>
+                    {isContactoDirecto
+                      ? `WhatsApp Directo (${obra.artista?.nombre})`
+                      : `Consultar WhatsApp con Galería`}
+                  </span>
+                </a>
+
+                <a
+                  href={getEmailLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 flex items-center justify-center gap-2 transition-colors text-xs font-semibold"
+                >
+                  <Mail className="w-4 h-4 text-amber-400" />
+                  <span>Email</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
