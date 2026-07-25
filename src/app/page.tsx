@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { MOCK_ARTISTAS, MOCK_OBRAS, MOCK_CONTACTOS_PLATAFORMA } from '@/lib/mockData';
 import { Artista, Obra, ContactoPlataforma, RolUsuario } from '@/types/database';
 import { fetchInitialData } from '@/lib/supabase/data';
+import { Navbar } from '@/components/Navbar';
 import { CatalogSection } from '@/components/CatalogSection';
 import { ArtistSection } from '@/components/ArtistSection';
 import { AdminPreviewPanel } from '@/components/AdminPreviewPanel';
 import { ArtistDashboardModal } from '@/components/ArtistDashboardModal';
-import { Sparkles, ArrowRight, ShieldCheck, Palette, Award, UserCheck } from 'lucide-react';
+import { AuthModal } from '@/components/AuthModal';
+import { Sparkles, ArrowRight, ShieldCheck, Palette, Award, Lock } from 'lucide-react';
 
 export default function Home() {
   const [artistas, setArtistas] = useState<Artista[]>(MOCK_ARTISTAS);
@@ -17,7 +19,13 @@ export default function Home() {
     MOCK_CONTACTOS_PLATAFORMA
   );
   const [isLive, setIsLive] = useState(false);
+
+  // Estados de Autenticación & Rol del Usuario
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<RolUsuario | 'visitante'>('visitante');
   const [activeArtistDashboard, setActiveArtistDashboard] = useState<Artista | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -29,6 +37,47 @@ export default function Home() {
     }
     loadData();
   }, []);
+
+  // Lógica de Autenticación y Asignación de Roles
+  const handleAuthSuccess = (email: string) => {
+    setCurrentUserEmail(email);
+    const emailLower = email.toLowerCase();
+
+    // 1. Detección de SuperAdmin / Gestor (Ramiro o Administrador)
+    if (
+      emailLower.includes('ramiro') ||
+      emailLower.includes('contacto@galeriacubana.art') ||
+      emailLower.includes('admin')
+    ) {
+      setCurrentRole('superadmin');
+      setIsAdminPanelOpen(true);
+      setActiveArtistDashboard(null);
+      return;
+    }
+
+    // 2. Detección de Artista por Email o Coincidencia
+    const matchedArtist = artistas.find(
+      (a) =>
+        (a.whatsapp_email_contacto &&
+          a.whatsapp_email_contacto.toLowerCase().includes(emailLower)) ||
+        a.nombre.toLowerCase().includes(emailLower.split('@')[0])
+    ) || artistas[0]; // Fallback al primer artista registrado en demo
+
+    if (matchedArtist) {
+      setCurrentRole('artista');
+      setActiveArtistDashboard(matchedArtist);
+      setIsAdminPanelOpen(false);
+    } else {
+      setCurrentRole('visitante');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUserEmail(null);
+    setCurrentRole('visitante');
+    setActiveArtistDashboard(null);
+    setIsAdminPanelOpen(false);
+  };
 
   // Handler para alternar contacto_directo de un artista
   const handleToggleContactoDirecto = (artistaId: string) => {
@@ -66,7 +115,7 @@ export default function Home() {
     }
   };
 
-  // Handlers para agregar, editar y eliminar artistas
+  // Handlers para CRUD de Artistas
   const handleAddArtista = (data: {
     nombre: string;
     bio?: string;
@@ -207,7 +256,19 @@ export default function Home() {
 
   return (
     <div className="space-y-8 sm:space-y-12 pb-16">
-      {/* Hero Section */}
+      {/* Top Header Navbar con Roles */}
+      <Navbar
+        currentUserEmail={currentUserEmail}
+        currentRole={currentRole}
+        activeArtist={activeArtistDashboard}
+        onOpenAuth={() => setShowAuthModal(true)}
+        onLogout={handleLogout}
+        onOpenArtistDashboard={() => setActiveArtistDashboard(activeArtistDashboard || artistas[0])}
+        onToggleAdminPanel={() => setIsAdminPanelOpen(!isAdminPanelOpen)}
+        isAdminPanelOpen={isAdminPanelOpen}
+      />
+
+      {/* Hero Section Público Limpio */}
       <section className="relative py-12 sm:py-20 lg:py-24 overflow-hidden bg-gradient-to-b from-[#0e1017] to-[#0a0b0e] border-b border-white/5">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
@@ -237,15 +298,12 @@ export default function Home() {
                 <ArrowRight className="w-4 h-4" />
               </a>
 
-              {artistas.length > 0 && (
-                <button
-                  onClick={() => setActiveArtistDashboard(artistas[0])}
-                  className="px-6 py-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-md w-full sm:w-auto"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  <span>Probar Dashboard de Artista</span>
-                </button>
-              )}
+              <a
+                href="#contacto-info"
+                className="px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-white/10 text-sm font-semibold flex items-center justify-center gap-2 transition-colors w-full sm:w-auto"
+              >
+                Modelo de Transparencia
+              </a>
             </div>
           </div>
         </div>
@@ -294,27 +352,35 @@ export default function Home() {
       {/* Artist Showcase Section */}
       <ArtistSection
         artistas={artistas}
-        onOpenDashboard={(art) => setActiveArtistDashboard(art)}
+        onOpenDashboard={(art) => {
+          if (currentRole === 'superadmin' || currentRole === 'gestor') {
+            setActiveArtistDashboard(art);
+          } else {
+            setShowAuthModal(true);
+          }
+        }}
       />
 
-      {/* Admin Panel Simulator */}
-      <AdminPreviewPanel
-        artistas={artistas}
-        obras={obras}
-        platformContacts={platformContacts}
-        onToggleContactoDirecto={handleToggleContactoDirecto}
-        onAddPlatformContact={handleAddPlatformContact}
-        onToggleContactActive={handleToggleContactActive}
-        onChangeContactRole={handleChangeContactRole}
-        onDeletePlatformContact={handleDeletePlatformContact}
-        onAddArtista={handleAddArtista}
-        onUpdateArtista={handleUpdateArtista}
-        onDeleteArtista={handleDeleteArtista}
-        onAddObra={handleAddObra}
-        onUpdateObra={handleUpdateObra}
-        onDeleteObra={handleDeleteObra}
-        onToggleObraDisponibilidad={handleToggleObraDisponibilidad}
-      />
+      {/* Admin Panel Simulator - Solo visible si SuperAdmin / Gestor o panel activado */}
+      {(currentRole === 'superadmin' || currentRole === 'gestor' || isAdminPanelOpen) && (
+        <AdminPreviewPanel
+          artistas={artistas}
+          obras={obras}
+          platformContacts={platformContacts}
+          onToggleContactoDirecto={handleToggleContactoDirecto}
+          onAddPlatformContact={handleAddPlatformContact}
+          onToggleContactActive={handleToggleContactActive}
+          onChangeContactRole={handleChangeContactRole}
+          onDeletePlatformContact={handleDeletePlatformContact}
+          onAddArtista={handleAddArtista}
+          onUpdateArtista={handleUpdateArtista}
+          onDeleteArtista={handleDeleteArtista}
+          onAddObra={handleAddObra}
+          onUpdateObra={handleUpdateObra}
+          onDeleteObra={handleDeleteObra}
+          onToggleObraDisponibilidad={handleToggleObraDisponibilidad}
+        />
+      )}
 
       {/* Modal de Dashboard de Artista Autenticado */}
       {activeArtistDashboard && (
@@ -331,6 +397,13 @@ export default function Home() {
           onToggleObraDisponibilidad={handleToggleObraDisponibilidad}
         />
       )}
+
+      {/* Modal de Autenticación */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }
