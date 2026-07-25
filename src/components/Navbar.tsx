@@ -109,7 +109,7 @@ export function Navbar({
               className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0"
             >
               <LogIn className="w-3.5 h-3.5 text-amber-400" />
-              <span>Acceso Creadores</span>
+              <span>Acceso / Iniciar Sesión</span>
             </button>
           )}
         </nav>
