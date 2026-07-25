@@ -2,15 +2,16 @@
 
 import React from 'react';
 import { Artista } from '@/types/database';
-import { ShieldCheck, MapPin, Sparkles, UserCheck, Edit3 } from 'lucide-react';
+import { ShieldCheck, MapPin, Sparkles, Edit3 } from 'lucide-react';
 import Image from 'next/image';
 
 interface ArtistSectionProps {
   artistas: Artista[];
   onOpenDashboard?: (artista: Artista) => void;
+  isAdminLoggedIn?: boolean;
 }
 
-export function ArtistSection({ artistas, onOpenDashboard }: ArtistSectionProps) {
+export function ArtistSection({ artistas, onOpenDashboard, isAdminLoggedIn = false }: ArtistSectionProps) {
   return (
     <section id="artistas" className="py-16 bg-[#07080b] border-t border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,13 +76,14 @@ export function ArtistSection({ artistas, onOpenDashboard }: ArtistSectionProps)
                   )}
                 </div>
 
-                {onOpenDashboard && (
+                {/* Únicamente visible cuando el SuperAdmin ha iniciado sesión */}
+                {isAdminLoggedIn && onOpenDashboard && (
                   <button
                     onClick={() => onOpenDashboard(art)}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-amber-500/10 text-slate-300 hover:text-amber-300 border border-white/10 hover:border-amber-500/30 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors mt-2"
+                    className="w-full py-1.5 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors mt-2"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Mi Dashboard ({art.nombre.split(' ')[0]})</span>
+                    <Edit3 className="w-3 h-3 text-amber-400" />
+                    <span>Administrar Perfil (SuperAdmin)</span>
                   </button>
                 )}
               </div>

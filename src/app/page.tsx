@@ -352,13 +352,8 @@ export default function Home() {
       {/* Artist Showcase Section */}
       <ArtistSection
         artistas={artistas}
-        onOpenDashboard={(art) => {
-          if (currentRole === 'superadmin' || currentRole === 'gestor') {
-            setActiveArtistDashboard(art);
-          } else {
-            setShowAuthModal(true);
-          }
-        }}
+        isAdminLoggedIn={currentRole === 'superadmin' || currentRole === 'gestor'}
+        onOpenDashboard={(art) => setActiveArtistDashboard(art)}
       />
 
       {/* Admin Panel Simulator - Solo visible si SuperAdmin / Gestor o panel activado */}
