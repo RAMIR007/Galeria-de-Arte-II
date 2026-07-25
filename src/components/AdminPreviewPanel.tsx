@@ -267,15 +267,15 @@ export function AdminPreviewPanel({
   };
 
   return (
-    <div id="contacto-info" className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-[#12141a] border border-amber-500/30 rounded-2xl p-6 sm:p-8 glass-card">
+    <div id="contacto-info" className="py-8 sm:py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-[#12141a] border border-amber-500/30 rounded-2xl p-4 sm:p-8 glass-card">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
           <div>
             <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
               <Shield className="w-4 h-4" />
               <span>Panel de Control & Administración de Equipo</span>
             </div>
-            <h3 className="text-xl font-serif font-bold text-white">
+            <h3 className="text-lg sm:text-xl font-serif font-bold text-white">
               Gestión de Permisos, Registro de Artistas & Control de Equipo
             </h3>
             <p className="text-xs text-slate-400 mt-1">
@@ -283,13 +283,13 @@ export function AdminPreviewPanel({
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto shrink-0">
             {currentUserEmail ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300">
-                <span>Sesión: <strong>{currentUserEmail}</strong></span>
+              <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300">
+                <span className="truncate">Sesión: <strong>{currentUserEmail}</strong></span>
                 <button
                   onClick={() => setCurrentUserEmail(null)}
-                  className="p-1 hover:text-white transition-colors"
+                  className="p-1 hover:text-white transition-colors shrink-0"
                   title="Cerrar Sesión"
                 >
                   <LogOut className="w-3.5 h-3.5 text-red-400" />
@@ -298,7 +298,7 @@ export function AdminPreviewPanel({
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-200 border border-white/10 hover:border-amber-500/50 hover:text-amber-300 transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-200 border border-white/10 hover:border-amber-500/50 hover:text-amber-300 transition-all flex items-center justify-center gap-1.5 w-full xs:w-auto"
               >
                 <LogIn className="w-3.5 h-3.5 text-amber-400" />
                 <span>Iniciar Sesión</span>
@@ -307,9 +307,9 @@ export function AdminPreviewPanel({
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all text-center w-full xs:w-auto"
             >
-              {isOpen ? 'Ocultar Panel Admin' : 'Abrir Panel de Administración'}
+              {isOpen ? 'Ocultar Panel' : 'Abrir Panel Admin'}
             </button>
           </div>
         </div>
