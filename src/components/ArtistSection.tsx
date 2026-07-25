@@ -21,8 +21,9 @@ export function ArtistSection({ artistas }: ArtistSectionProps) {
             Nuestros Artistas Cubanos
           </h2>
           <p className="text-sm text-slate-400 leading-relaxed">
-            Conoce a los creadores detrás de cada obra. Los artistas marcados como{' '}
-            <strong className="text-emerald-400">"De Confianza"</strong> reciben consultas directas en sus canales personales.
+            Conoce a los creadores detrás de cada obra. Las piezas cuentan con opción de{' '}
+            <strong className="text-emerald-400">Contacto Directo</strong> habilitado o{' '}
+            <strong className="text-amber-300">Gestión Asistida</strong> coordinada por nuestro equipo.
           </p>
         </div>
 
@@ -62,12 +63,12 @@ export function ArtistSection({ artistas }: ArtistSectionProps) {
                 {art.contacto_directo ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    Artista de Confianza (Directo)
+                    Contacto Directo Habilitado
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
                     <Sparkles className="w-3.5 h-3.5" />
-                    Contacto Vía Plataforma
+                    Gestión Asistida por Plataforma
                   </span>
                 )}
               </div>

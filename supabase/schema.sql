@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS public.artistas (
     foto_perfil TEXT,
     redes_sociales JSONB DEFAULT '{}'::jsonb,
     whatsapp_email_contacto TEXT,
-    contacto_directo BOOLEAN NOT NULL DEFAULT false, -- Solo modificable por rol admin
+    contacto_directo BOOLEAN NOT NULL DEFAULT false, -- True: contacto directo habilitado | False: negociación asistida por equipo
+    rol TEXT NOT NULL DEFAULT 'artista', -- 'artista', 'gestor', 'superadmin'
     fecha_registro TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -31,11 +32,13 @@ CREATE TABLE IF NOT EXISTS public.obras (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 3. Tabla de Contactos de la Plataforma
+-- 3. Tabla de Equipo y Contactos de la Plataforma (Admins & Gestores)
 CREATE TABLE IF NOT EXISTS public.contactos_plataforma (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     nombre_encargado TEXT NOT NULL,
     whatsapp_email TEXT NOT NULL,
+    rol TEXT NOT NULL DEFAULT 'gestor', -- 'superadmin' (Ramiro) o 'gestor' (equipo de apoyo)
     activo BOOLEAN NOT NULL DEFAULT true,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );

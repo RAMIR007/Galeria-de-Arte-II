@@ -31,17 +31,17 @@ export function ArtworkCard({ obra, onSelect }: ArtworkCardProps) {
 
         <div className="absolute inset-0 bg-gradient-to-t from-[#12141a] via-transparent to-transparent opacity-80" />
 
-        {/* Badge: Contacto Directo vs Plataforma */}
+        {/* Badge: Contacto Directo vs Gestión Asistida */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
           {isContactoDirecto ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
               <ShieldCheck className="w-3.5 h-3.5" />
-              Directo con Artista
+              Contacto Directo
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5" />
-              Vía Plataforma
+              Gestión Asistida
             </span>
           )}
         </div>

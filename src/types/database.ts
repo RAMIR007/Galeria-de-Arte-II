@@ -1,3 +1,14 @@
+export type RolUsuario = 'superadmin' | 'gestor' | 'artista';
+
+export interface UsuarioAdmin {
+  id: string;
+  nombre: string;
+  email_whatsapp: string;
+  rol: RolUsuario;
+  activo: boolean;
+  fecha_creacion: string;
+}
+
 export interface Artista {
   id: string;
   user_id?: string | null;
@@ -8,6 +19,7 @@ export interface Artista {
   redes_sociales?: Record<string, string> | null;
   whatsapp_email_contacto?: string | null;
   contacto_directo: boolean;
+  rol?: RolUsuario;
   fecha_registro: string;
 }
 
@@ -33,6 +45,7 @@ export interface ContactoPlataforma {
   whatsapp_email: string;
   activo: boolean;
   fecha_creacion: string;
+  rol?: RolUsuario;
 }
 
 export interface FiltrosCatalogo {
@@ -41,3 +54,4 @@ export interface FiltrosCatalogo {
   busqueda?: string;
   disponibleOnly?: boolean;
 }
+

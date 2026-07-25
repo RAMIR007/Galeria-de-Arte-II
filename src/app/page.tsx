@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { MOCK_ARTISTAS, MOCK_OBRAS, MOCK_CONTACTOS_PLATAFORMA } from '@/lib/mockData';
-import { Artista, Obra, ContactoPlataforma } from '@/types/database';
+import { Artista, Obra, ContactoPlataforma, RolUsuario } from '@/types/database';
 import { CatalogSection } from '@/components/CatalogSection';
 import { ArtistSection } from '@/components/ArtistSection';
 import { AdminPreviewPanel } from '@/components/AdminPreviewPanel';
@@ -44,16 +44,87 @@ export default function Home() {
     );
   };
 
-  // Handler para añadir nuevo contacto de plataforma
-  const handleAddPlatformContact = (nombre: string, contacto: string) => {
+  // Handlers para agregar, editar y eliminar artistas
+  const handleAddArtista = (data: {
+    nombre: string;
+    bio?: string;
+    provincia_ciudad?: string;
+    foto_perfil?: string;
+    whatsapp_email_contacto?: string;
+    contacto_directo?: boolean;
+  }) => {
+    const newArtist: Artista = {
+      id: `art-${Date.now()}`,
+      nombre: data.nombre,
+      bio: data.bio || '',
+      provincia_ciudad: data.provincia_ciudad || 'La Habana',
+      foto_perfil: data.foto_perfil || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=500',
+      whatsapp_email_contacto: data.whatsapp_email_contacto || '',
+      contacto_directo: data.contacto_directo ?? false,
+      rol: 'artista',
+      fecha_registro: new Date().toISOString(),
+    };
+    setArtistas((prev) => [...prev, newArtist]);
+  };
+
+  const handleUpdateArtista = (artistaId: string, updates: Partial<Artista>) => {
+    setArtistas((prev) =>
+      prev.map((art) => (art.id === artistaId ? { ...art, ...updates } : art))
+    );
+
+    // Sincronizar en obras relacionales
+    setObras((prevObras) =>
+      prevObras.map((obra) => {
+        if (obra.artista_id === artistaId && obra.artista) {
+          return {
+            ...obra,
+            artista: {
+              ...obra.artista,
+              ...updates,
+            },
+          };
+        }
+        return obra;
+      })
+    );
+  };
+
+  const handleDeleteArtista = (artistaId: string) => {
+    setArtistas((prev) => prev.filter((art) => art.id !== artistaId));
+    setObras((prev) => prev.filter((obra) => obra.artista_id !== artistaId));
+  };
+
+  // Handlers para la gestión de equipo y contactos de plataforma
+  const handleAddPlatformContact = (
+    nombre: string,
+    contacto: string,
+    rol: RolUsuario = 'gestor'
+  ) => {
     const newContact: ContactoPlataforma = {
       id: `plat-${Date.now()}`,
       nombre_encargado: nombre,
       whatsapp_email: contacto,
       activo: true,
+      rol: rol,
       fecha_creacion: new Date().toISOString(),
     };
     setPlatformContacts((prev) => [...prev, newContact]);
+  };
+
+  const handleToggleContactActive = (contactId: string) => {
+    setPlatformContacts((prev) =>
+      prev.map((c) => (c.id === contactId ? { ...c, activo: !c.activo } : c))
+    );
+  };
+
+  const handleChangeContactRole = (contactId: string, rol: RolUsuario) => {
+    setPlatformContacts((prev) =>
+      prev.map((c) => (c.id === contactId ? { ...c, rol } : c))
+    );
+  };
+
+  const handleDeletePlatformContact = (contactId: string) => {
+    setPlatformContacts((prev) => prev.filter((c) => c.id !== contactId));
   };
 
   return (
@@ -115,8 +186,8 @@ export default function Home() {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-semibold text-white">Artistas de Confianza</h4>
-              <p className="text-[11px] text-slate-400">Trato directo sin intermediarios según habilitación</p>
+              <h4 className="text-xs font-semibold text-white">Atención & Gestión Directa</h4>
+              <p className="text-[11px] text-slate-400">Trato directo habilitado o negociación guiada por el equipo</p>
             </div>
           </div>
 
@@ -148,6 +219,12 @@ export default function Home() {
         platformContacts={platformContacts}
         onToggleContactoDirecto={handleToggleContactoDirecto}
         onAddPlatformContact={handleAddPlatformContact}
+        onToggleContactActive={handleToggleContactActive}
+        onChangeContactRole={handleChangeContactRole}
+        onDeletePlatformContact={handleDeletePlatformContact}
+        onAddArtista={handleAddArtista}
+        onUpdateArtista={handleUpdateArtista}
+        onDeleteArtista={handleDeleteArtista}
       />
     </div>
   );

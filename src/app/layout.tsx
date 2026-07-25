@@ -99,7 +99,7 @@ export default function RootLayout({
                   <p className="flex items-start gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span>
-                      <strong className="text-slate-300">Artistas de Confianza:</strong> Contacto directo vía WhatsApp o Email personal.
+                      <strong className="text-slate-300">Contacto Directo:</strong> Comunicación directa vía WhatsApp o Email habilitado.
                     </span>
                   </p>
                   <p className="flex items-start gap-2">

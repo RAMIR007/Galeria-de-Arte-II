@@ -170,7 +170,7 @@ export function ArtworkModal({ obra, platformContacts, onClose }: ArtworkModalPr
                   <>
                     <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-emerald-300 block mb-0.5">Artista de Confianza (Directo)</strong>
+                      <strong className="text-emerald-300 block mb-0.5">Contacto Directo Habilitado</strong>
                       <span>
                         Al pulsar contactar, te comunicarás directamente con el artista ({obra.artista?.nombre}).
                       </span>
@@ -180,9 +180,9 @@ export function ArtworkModal({ obra, platformContacts, onClose }: ArtworkModalPr
                   <>
                     <PhoneCall className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <strong className="text-amber-300 block mb-0.5">Atención vía Plataforma</strong>
+                      <strong className="text-amber-300 block mb-0.5">Gestión Asistida por Plataforma</strong>
                       <span>
-                        Negociación asistida por el equipo oficial ({activePlatformContact?.nombre_encargado || 'Ramiro'}).
+                        El equipo de la plataforma ({activePlatformContact?.nombre_encargado || 'Ramiro y equipo'}) gestiona las consultas y la negociación para comodidad de los clientes y artistas.
                       </span>
                     </div>
                   </>
