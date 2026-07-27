@@ -122,7 +122,7 @@ export default function VerificarObraPage() {
                   Respaldo Oficial de la Galería Virtual de Arte Cubano
                 </strong>
                 <span>
-                  Esta pieza forma parte del inventario auditado. La autenticidad está garantizada de forma permanente por la dirección de la galería y el artista autor.
+                  Esta pieza forma parte del inventario auditado. La autenticidad está garantizada de forma permanente por Ramiro Mantilla (Director General) y el artista autor.
                 </span>
               </div>
             </div>

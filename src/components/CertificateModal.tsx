@@ -171,12 +171,12 @@ export function CertificateModal({ obra, onClose }: CertificateModalProps) {
               <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
                 <div className="h-16 flex flex-col justify-end">
                   <span className="font-serif italic text-amber-300 text-lg font-bold block leading-none print:text-amber-900">
-                    Ramiro
+                    Ramiro Mantilla
                   </span>
-                  <div className="w-32 h-px bg-amber-500/50 mt-1" />
+                  <div className="w-36 h-px bg-amber-500/50 mt-1" />
                 </div>
                 <span className="text-[10px] text-slate-400 uppercase font-semibold mt-1 print:text-slate-700">
-                  Dirección General
+                  Director General
                 </span>
                 <span className="text-[9px] text-slate-500 print:text-slate-500">
                   Galería Virtual de Arte Cubano
