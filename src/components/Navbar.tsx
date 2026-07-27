@@ -35,11 +35,11 @@ export function Navbar({
             <Palette className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
           </div>
           <div className="flex flex-col">
-            <span className="text-base sm:text-xl font-serif tracking-wider font-bold gold-gradient-text leading-tight">
-              GALERÍA CUBANA
+            <span className="text-sm sm:text-lg font-serif tracking-wider font-bold gold-gradient-text leading-tight">
+              GALERÍA VIRTUAL DE ARTE CUBANO
             </span>
             <span className="text-[9px] sm:text-[10px] tracking-[0.18em] text-slate-400 uppercase font-medium hidden xs:block">
-              Arte Virtual & Curaduría
+              Plataforma Oficial & Curaduría
             </span>
           </div>
         </Link>
