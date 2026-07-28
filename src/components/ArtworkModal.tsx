@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Obra, ContactoPlataforma } from '@/types/database';
+import { Obra, ContactoPlataforma, Divisa } from '@/types/database';
 import {
   X,
-  CheckCircle,
   PhoneCall,
   Mail,
   Ruler,
@@ -17,6 +16,9 @@ import {
   Maximize2,
   Award,
   ZoomIn,
+  FileText,
+  Truck,
+  Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
 import { WallVisualizerModal } from './WallVisualizerModal';
@@ -28,6 +30,7 @@ interface ArtworkModalProps {
   onClose: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: (obraId: string) => void;
+  currency?: Divisa;
 }
 
 export function ArtworkModal({
@@ -36,10 +39,11 @@ export function ArtworkModal({
   onClose,
   isFavorite = false,
   onToggleFavorite,
+  currency = 'USD',
 }: ArtworkModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Estados de Vanguardia (Fase 5)
+  // Estados de Vanguardia
   const [showWallVisualizer, setShowWallVisualizer] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
@@ -72,22 +76,32 @@ export function ArtworkModal({
     setZoomPos({ x, y });
   };
 
+  // Formateo de Precios en USD / EUR
+  const formatDisplayPrice = (priceUsd: number | undefined | null) => {
+    if (!priceUsd) return 'Consultar directamente';
+    if (currency === 'EUR') {
+      const priceEur = Math.round(priceUsd * 0.92);
+      return `€${priceEur.toLocaleString()} EUR ($${priceUsd.toLocaleString()} USD)`;
+    }
+    return `$${priceUsd.toLocaleString()} USD (€${Math.round(priceUsd * 0.92).toLocaleString()} EUR)`;
+  };
+
+  // Mensaje estructurado de WhatsApp
   const getWhatsAppLink = () => {
     const artistaNombre = obra.artista?.nombre || 'Artista Cubano';
+    const structuredText = `Hola, estoy interesado en adquirir la obra '${obra.titulo}' del artista ${artistaNombre} (Ref: ID-${obra.id}). Deseo consultar disponibilidad y opciones de envío.`;
+
     if (isContactoDirecto && obra.artista?.whatsapp_email_contacto) {
       const contactInfo = obra.artista.whatsapp_email_contacto;
       if (!contactInfo.includes('@')) {
         const cleanNum = contactInfo.replace(/[^0-9+]/g, '');
-        const text = `Hola ${artistaNombre}, vi tu obra "${obra.titulo}" (${obra.tecnica || 'Arte Cubano'}${obra.año ? `, ${obra.año}` : ''}) en la Galería Virtual de Arte Cubano. Me gustaría ponerme en contacto directo contigo para consultar su disponibilidad y adquisición.`;
-        return `https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`;
+        return `https://wa.me/${cleanNum}?text=${encodeURIComponent(structuredText)}`;
       }
     }
 
     if (activePlatformContact) {
       const cleanNum = activePlatformContact.whatsapp_email.replace(/[^0-9+]/g, '');
-      const gestorNombre = activePlatformContact.nombre_encargado;
-      const text = `Hola ${gestorNombre} (Galería Virtual de Arte Cubano), estoy interesado en recibir asistencia oficial para negociar y adquirir la obra "${obra.titulo}" del artista ${artistaNombre}.`;
-      return `https://wa.me/${cleanNum}?text=${encodeURIComponent(text)}`;
+      return `https://wa.me/${cleanNum}?text=${encodeURIComponent(structuredText)}`;
     }
 
     return '#';
@@ -95,8 +109,8 @@ export function ArtworkModal({
 
   const getEmailLink = () => {
     const artistaNombre = obra.artista?.nombre || 'Artista Cubano';
-    const subject = `Consulta sobre obra: ${obra.titulo} - Galería de Arte Cubano`;
-    const body = `Hola ${isContactoDirecto ? artistaNombre : 'Galería de Arte Cubano'},\n\nEstoy interesado(a) en obtener más detalles y disponibilidad de la obra "${obra.titulo}" (${obra.tecnica || 'Arte Cubano'}) por ${artistaNombre}.\n\nSaludos.`;
+    const subject = `Consulta sobre obra: ${obra.titulo} (Ref: ID-${obra.id})`;
+    const body = `Hola,\n\nEstoy interesado(a) en adquirir la obra "${obra.titulo}" (${obra.tecnica || 'Arte Cubano'}) por ${artistaNombre} (Ref: ID-${obra.id}).\n\nDeseo consultar disponibilidad y opciones de envío internacional.\n\nSaludos.`;
 
     if (isContactoDirecto && obra.artista?.whatsapp_email_contacto?.includes('@')) {
       return `mailto:${obra.artista.whatsapp_email_contacto}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -222,22 +236,14 @@ export function ArtworkModal({
             </div>
 
             {/* Details Column */}
-            <div className="p-6 md:p-8 flex flex-col justify-between space-y-6">
+            <div className="p-6 md:p-8 flex flex-col justify-between space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
               <div>
-                {/* Disponibilidad badge */}
+                {/* Disponibilidad badge & Ref ID */}
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span className="text-xs uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-medium">
                     {obra.tecnica || 'Arte Cubano'}
                   </span>
-                  <span
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                      obra.disponible
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-slate-700/40 text-slate-400'
-                    }`}
-                  >
-                    {obra.disponible ? '✓ Disponible' : 'Reservada'}
-                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">Ref: ID-{obra.id}</span>
                 </div>
 
                 <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1">
@@ -247,10 +253,34 @@ export function ArtworkModal({
                   por {obra.artista?.nombre || 'Artista Cubano'}
                 </p>
 
-                <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                <p className="text-xs text-slate-300 leading-relaxed mb-4">
                   {obra.descripcion ||
                     'Pieza original autenticada. Creada por destacados artistas de las artes plásticas cubanas contemporáneas.'}
                 </p>
+
+                {/* Análisis Curatorial (Curator's Analysis) */}
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-1.5 mb-4">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-semibold uppercase tracking-wider text-[11px]">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Análisis Curatorial de la Galería</span>
+                  </div>
+                  <p className="text-slate-200 italic leading-relaxed">
+                    {obra.analisis_curatorial ||
+                      'Obra consignada en exclusividad. Destaca por su impecable ejecución técnica y valor conceptual en el panorama plástico cubano.'}
+                  </p>
+                  <span className="text-[10px] text-amber-300/80 block font-serif">
+                    — Dirección de Curaduría & Autenticidad
+                  </span>
+                </div>
+
+                {/* Insignia Logística de Envío Internacional */}
+                <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-xs flex items-start gap-2 text-sky-200 mb-4">
+                  <Truck className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed">
+                    {obra.opciones_envio ||
+                      '✈️ Envío internacional seguro: Lienzo enrollado en tubo de alta resistencia con certificado de exportación y seguro de tránsito incluido.'}
+                  </p>
+                </div>
 
                 {/* Data Grid */}
                 <div className="grid grid-cols-2 gap-3 p-4 rounded-xl bg-slate-900/60 border border-white/5 text-xs mb-6">
@@ -270,16 +300,19 @@ export function ArtworkModal({
                     </div>
                   </div>
 
-                  <div className="col-span-2 flex items-center gap-2 text-slate-300 pt-2 border-t border-white/5">
-                    <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div>
-                      <span className="text-[10px] text-slate-500 block">Precio de Referencia</span>
-                      <span className="font-semibold text-emerald-400 text-sm">
-                        {obra.precio_referencia
-                          ? `$${obra.precio_referencia.toLocaleString()} USD`
-                          : 'Consultar directamente'}
-                      </span>
+                  <div className="col-span-2 flex items-center justify-between gap-2 text-slate-300 pt-2 border-t border-white/5">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <div>
+                        <span className="text-[10px] text-slate-500 block">Precio de Referencia ({currency})</span>
+                        <span className="font-semibold text-emerald-400 text-sm">
+                          {formatDisplayPrice(obra.precio_referencia)}
+                        </span>
+                      </div>
                     </div>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20 font-semibold">
+                      Consignación Exclusiva
+                    </span>
                   </div>
                 </div>
               </div>
@@ -293,8 +326,8 @@ export function ArtworkModal({
                       <ShieldCheck className="w-3.5 h-3.5" /> Trato Directo con Artista
                     </span>
                   ) : (
-                    <span className="text-amber-300 font-semibold">
-                      Atención Asistida por Galería
+                    <span className="text-amber-300 font-semibold flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> Atención Asistida Galería
                     </span>
                   )}
                 </div>
@@ -309,8 +342,8 @@ export function ArtworkModal({
                     <PhoneCall className="w-4 h-4" />
                     <span>
                       {isContactoDirecto
-                        ? `WhatsApp Directo (${obra.artista?.nombre})`
-                        : `Consultar WhatsApp con Galería`}
+                        ? `Consultar por WhatsApp (${obra.artista?.nombre})`
+                        : `Consultar por WhatsApp con Galería`}
                     </span>
                   </a>
 
@@ -348,4 +381,3 @@ export function ArtworkModal({
     </>
   );
 }
-

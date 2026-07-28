@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Obra, Artista, ContactoPlataforma } from '@/types/database';
+import { Obra, Artista, ContactoPlataforma, Divisa } from '@/types/database';
 import { ArtworkCard } from './ArtworkCard';
 import { ArtworkModal } from './ArtworkModal';
 import { useFavorites } from '@/lib/useFavorites';
@@ -11,9 +11,10 @@ interface CatalogSectionProps {
   obras: Obra[];
   artistas: Artista[];
   platformContacts: ContactoPlataforma[];
+  currency?: Divisa;
 }
 
-export function CatalogSection({ obras, artistas, platformContacts }: CatalogSectionProps) {
+export function CatalogSection({ obras, artistas, platformContacts, currency = 'USD' }: CatalogSectionProps) {
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArtistaId, setSelectedArtistaId] = useState<string>('all');
@@ -301,6 +302,7 @@ export function CatalogSection({ obras, artistas, platformContacts }: CatalogSec
               onSelect={(o) => setSelectedObra(o)}
               isFavorite={isFavorite(obra.id)}
               onToggleFavorite={toggleFavorite}
+              currency={currency}
             />
           ))}
         </div>
@@ -327,6 +329,7 @@ export function CatalogSection({ obras, artistas, platformContacts }: CatalogSec
         onClose={() => setSelectedObra(null)}
         isFavorite={selectedObra ? isFavorite(selectedObra.id) : false}
         onToggleFavorite={toggleFavorite}
+        currency={currency}
       />
     </section>
   );

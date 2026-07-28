@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { MOCK_ARTISTAS, MOCK_OBRAS, MOCK_CONTACTOS_PLATAFORMA } from '@/lib/mockData';
-import { Artista, Obra, ContactoPlataforma, RolUsuario } from '@/types/database';
+import { Artista, Obra, ContactoPlataforma, RolUsuario, Divisa } from '@/types/database';
 import { fetchInitialData } from '@/lib/supabase/data';
 import { Navbar } from '@/components/Navbar';
 import { CatalogSection } from '@/components/CatalogSection';
 import { ArtistSection } from '@/components/ArtistSection';
 import { AdminPreviewPanel } from '@/components/AdminPreviewPanel';
 import { ArtistDashboardModal } from '@/components/ArtistDashboardModal';
+import { ArtistDetailModal } from '@/components/ArtistDetailModal';
 import { AuthModal } from '@/components/AuthModal';
+import { ArtistInvitationModal } from '@/components/ArtistInvitationModal';
 import { Sparkles, ArrowRight, ShieldCheck, Palette, Award, Lock } from 'lucide-react';
 
 export default function Home() {
@@ -19,13 +21,23 @@ export default function Home() {
     MOCK_CONTACTOS_PLATAFORMA
   );
   const [isLive, setIsLive] = useState(false);
+  const [currency, setCurrency] = useState<Divisa>('USD');
 
   // Estados de Autenticación & Rol del Usuario
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<RolUsuario | 'visitante'>('visitante');
   const [activeArtistDashboard, setActiveArtistDashboard] = useState<Artista | null>(null);
+  const [selectedArtistDetail, setSelectedArtistDetail] = useState<Artista | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+
+  // Estado de Invitaciones por Correo
+  const [invitationModalArtist, setInvitationModalArtist] = useState<Artista | null>(null);
+  const [invitedEmail, setInvitedEmail] = useState<string | null>(null);
+
+  const handleToggleCurrency = () => {
+    setCurrency((prev) => (prev === 'USD' ? 'EUR' : 'USD'));
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -36,6 +48,17 @@ export default function Home() {
       setIsLive(data.isLive);
     }
     loadData();
+
+    // Detección de enlace de invitación en URL (?invitacion=...&email=...)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const emailParam = params.get('email');
+      const invToken = params.get('invitacion');
+      if (emailParam || invToken) {
+        setInvitedEmail(emailParam);
+        setShowAuthModal(true);
+      }
+    }
   }, []);
 
   // Lógica de Autenticación y Asignación de Roles
@@ -64,6 +87,14 @@ export default function Home() {
     ) || artistas[0]; // Fallback al primer artista registrado en demo
 
     if (matchedArtist) {
+      // Marcar invitación como aceptada
+      setArtistas((prev) =>
+        prev.map((a) =>
+          a.id === matchedArtist.id
+            ? { ...a, estado_invitacion: 'aceptado', invitacion_enviada: true }
+            : a
+        )
+      );
       setCurrentRole('artista');
       setActiveArtistDashboard(matchedArtist);
       setIsAdminPanelOpen(false);
@@ -123,7 +154,7 @@ export default function Home() {
     foto_perfil?: string;
     whatsapp_email_contacto?: string;
     contacto_directo?: boolean;
-  }) => {
+  }): Artista => {
     const newArtist: Artista = {
       id: `art-${Date.now()}`,
       nombre: data.nombre,
@@ -133,9 +164,15 @@ export default function Home() {
       whatsapp_email_contacto: data.whatsapp_email_contacto || '',
       contacto_directo: data.contacto_directo ?? false,
       rol: 'artista',
+      invitacion_enviada: true,
+      fecha_invitacion: new Date().toISOString(),
+      token_invitacion: `inv-art-${Date.now().toString(36)}`,
+      estado_invitacion: 'pendiente',
       fecha_registro: new Date().toISOString(),
     };
     setArtistas((prev) => [...prev, newArtist]);
+    setInvitationModalArtist(newArtist);
+    return newArtist;
   };
 
   const handleUpdateArtista = (artistaId: string, updates: Partial<Artista>) => {
@@ -254,6 +291,19 @@ export default function Home() {
     setPlatformContacts((prev) => prev.filter((c) => c.id !== contactId));
   };
 
+  const handleUpdatePlatformContactFoto = (contactId: string, fotoUrl: string) => {
+    setPlatformContacts((prev) =>
+      prev.map((c) => (c.id === contactId ? { ...c, foto_perfil: fotoUrl } : c))
+    );
+  };
+
+  // Obtener avatar del usuario actual si existe
+  const activeUserAvatar =
+    currentRole === 'superadmin' || currentRole === 'gestor'
+      ? platformContacts.find((c) => c.whatsapp_email.toLowerCase().includes(currentUserEmail?.toLowerCase() || 'ramiro'))?.foto_perfil ||
+        platformContacts[0]?.foto_perfil
+      : activeArtistDashboard?.foto_perfil;
+
   return (
     <div className="space-y-8 sm:space-y-12 pb-16">
       {/* Top Header Navbar con Roles */}
@@ -261,6 +311,9 @@ export default function Home() {
         currentUserEmail={currentUserEmail}
         currentRole={currentRole}
         activeArtist={activeArtistDashboard}
+        userAvatar={activeUserAvatar}
+        currency={currency}
+        onToggleCurrency={handleToggleCurrency}
         onOpenAuth={() => setShowAuthModal(true)}
         onLogout={handleLogout}
         onOpenArtistDashboard={() => setActiveArtistDashboard(activeArtistDashboard || artistas[0])}
@@ -347,6 +400,7 @@ export default function Home() {
         obras={obras}
         artistas={artistas}
         platformContacts={platformContacts}
+        currency={currency}
       />
 
       {/* Artist Showcase Section */}
@@ -354,6 +408,7 @@ export default function Home() {
         artistas={artistas}
         isAdminLoggedIn={currentRole === 'superadmin' || currentRole === 'gestor'}
         onOpenDashboard={(art) => setActiveArtistDashboard(art)}
+        onViewArtistDetail={(art) => setSelectedArtistDetail(art)}
       />
 
       {/* Admin Panel Simulator - Solo visible si SuperAdmin / Gestor o panel activado */}
@@ -367,13 +422,25 @@ export default function Home() {
           onToggleContactActive={handleToggleContactActive}
           onChangeContactRole={handleChangeContactRole}
           onDeletePlatformContact={handleDeletePlatformContact}
+          onUpdatePlatformContactFoto={handleUpdatePlatformContactFoto}
           onAddArtista={handleAddArtista}
           onUpdateArtista={handleUpdateArtista}
           onDeleteArtista={handleDeleteArtista}
+          onOpenInvitationModal={(art) => setInvitationModalArtist(art)}
           onAddObra={handleAddObra}
           onUpdateObra={handleUpdateObra}
           onDeleteObra={handleDeleteObra}
           onToggleObraDisponibilidad={handleToggleObraDisponibilidad}
+        />
+      )}
+
+      {/* Modal de Detalle Público de Artista */}
+      {selectedArtistDetail && (
+        <ArtistDetailModal
+          isOpen={!!selectedArtistDetail}
+          onClose={() => setSelectedArtistDetail(null)}
+          artista={selectedArtistDetail}
+          obras={obras}
         />
       )}
 
@@ -396,8 +463,19 @@ export default function Home() {
       {/* Modal de Autenticación */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          setInvitedEmail(null);
+        }}
         onAuthSuccess={handleAuthSuccess}
+        invitationEmail={invitedEmail}
+      />
+
+      {/* Modal de Invitación Oficial por Correo */}
+      <ArtistInvitationModal
+        isOpen={!!invitationModalArtist}
+        onClose={() => setInvitationModalArtist(null)}
+        artista={invitationModalArtist}
       />
     </div>
   );

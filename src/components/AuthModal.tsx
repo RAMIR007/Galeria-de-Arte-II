@@ -9,16 +9,25 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: (email: string) => void;
+  invitationEmail?: string | null;
+  invitationToken?: string | null;
 }
 
-export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, onAuthSuccess, invitationEmail, invitationToken }: AuthModalProps) {
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'reset'>('login');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(invitationEmail || '');
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Actualizar email si cambia invitationEmail
+  React.useEffect(() => {
+    if (invitationEmail) {
+      setEmail(invitationEmail);
+    }
+  }, [invitationEmail]);
 
   if (!isOpen) return null;
 
@@ -140,6 +149,20 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
             Galería Virtual de Arte Cubano
           </p>
         </div>
+
+        {(invitationEmail || invitationToken) && (
+          <div className="mb-4 p-3.5 rounded-xl bg-purple-500/20 border border-purple-500/40 text-xs text-purple-200 flex items-start gap-2.5 shadow-lg">
+            <UserCheck className="w-5 h-5 text-purple-300 shrink-0 mt-0.5" />
+            <div>
+              <strong className="block text-purple-200 font-semibold mb-0.5">
+                ¡Invitación Oficial de Artista Detectada!
+              </strong>
+              <span>
+                Inicia sesión o registra tu contraseña con el correo <code className="text-amber-300 font-bold">{invitationEmail || 'registrado'}</code> para acceder inmediatamente a tu Portal de Artista.
+              </span>
+            </div>
+          </div>
+        )}
 
         {!isLive && (
           <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-start gap-2">

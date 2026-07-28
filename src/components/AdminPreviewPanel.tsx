@@ -27,17 +27,22 @@ import {
   Upload,
   LogIn,
   LogOut,
+  Mail,
+  Camera,
+  Send,
 } from 'lucide-react';
+import { ImageUploader } from './ImageUploader';
 
 interface AdminPreviewPanelProps {
   artistas: Artista[];
   obras: Obra[];
   platformContacts: ContactoPlataforma[];
   onToggleContactoDirecto: (artistaId: string) => void;
-  onAddPlatformContact: (nombre: string, contacto: string, rol?: RolUsuario) => void;
+  onAddPlatformContact: (nombre: string, contacto: string, rol?: RolUsuario, foto?: string) => void;
   onToggleContactActive?: (contactId: string) => void;
   onChangeContactRole?: (contactId: string, rol: RolUsuario) => void;
   onDeletePlatformContact?: (contactId: string) => void;
+  onUpdatePlatformContactFoto?: (contactId: string, fotoUrl: string) => void;
   onAddArtista?: (data: {
     nombre: string;
     bio?: string;
@@ -45,9 +50,10 @@ interface AdminPreviewPanelProps {
     foto_perfil?: string;
     whatsapp_email_contacto?: string;
     contacto_directo?: boolean;
-  }) => void;
+  }) => Artista | void;
   onUpdateArtista?: (artistaId: string, updates: Partial<Artista>) => void;
   onDeleteArtista?: (artistaId: string) => void;
+  onOpenInvitationModal?: (artista: Artista) => void;
   onAddObra?: (data: {
     titulo: string;
     artista_id: string;
@@ -73,9 +79,11 @@ export function AdminPreviewPanel({
   onToggleContactActive,
   onChangeContactRole,
   onDeletePlatformContact,
+  onUpdatePlatformContactFoto,
   onAddArtista,
   onUpdateArtista,
   onDeleteArtista,
+  onOpenInvitationModal,
   onAddObra,
   onUpdateObra,
   onDeleteObra,
@@ -150,14 +158,19 @@ export function AdminPreviewPanel({
   const handleAddArtistSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (artistNombre.trim()) {
-      onAddArtista?.({
+      const created = onAddArtista?.({
         nombre: artistNombre,
         bio: artistBio,
         provincia_ciudad: artistProvincia,
-        foto_perfil: artistFoto,
+        foto_perfil: artistFoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=500',
         whatsapp_email_contacto: artistContacto,
         contacto_directo: artistDirecto,
       });
+
+      if (created) {
+        onOpenInvitationModal?.(created);
+      }
+
       setArtistNombre('');
       setArtistBio('');
       setArtistProvincia('La Habana');
@@ -425,22 +438,14 @@ export function AdminPreviewPanel({
                           />
                         </div>
 
-                        <div>
-                          <label className="text-[11px] text-slate-400 block mb-1">Foto de Perfil (URL o Archivo)</label>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              placeholder="https://..."
-                              value={artistFoto}
-                              onChange={(e) => setArtistFoto(e.target.value)}
-                              className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
-                            />
-                            <label className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 text-xs cursor-pointer flex items-center gap-1 shrink-0">
-                              <Upload className="w-3.5 h-3.5 text-amber-400" />
-                              <span>Subir</span>
-                              <input type="file" accept="image/*" onChange={handleArtistImageFileUpload} className="hidden" />
-                            </label>
-                          </div>
+                        <div className="sm:col-span-2">
+                          <ImageUploader
+                            bucket="artistas-imagenes"
+                            multiple={false}
+                            label="Foto de Perfil del Artista (Sube una imagen o pega URL)"
+                            currentImages={artistFoto ? [artistFoto] : []}
+                            onImagesUploaded={(urls) => setArtistFoto(urls[0] || '')}
+                          />
                         </div>
 
                         <div>
@@ -489,55 +494,108 @@ export function AdminPreviewPanel({
 
                   {/* Lista de Artistas */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {artistas.map((art) => (
-                      <div
-                        key={art.id}
-                        className="p-4 rounded-xl bg-slate-900/80 border border-white/5 flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden shrink-0 border border-amber-500/20">
-                            {art.foto_perfil ? (
-                              <img src={art.foto_perfil} alt={art.nombre} className="w-full h-full object-cover" />
-                            ) : (
-                              <Palette className="w-5 h-5 text-slate-400 m-2" />
-                            )}
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-white block">{art.nombre}</span>
-                            <span className="text-[11px] text-slate-400">
-                              {art.provincia_ciudad || 'Cuba'} • {art.contacto_directo ? 'Contacto Directo' : 'Gestión Asistida'}
-                            </span>
-                          </div>
-                        </div>
+                    {artistas.map((art) => {
+                      const isClaimed = art.user_id || art.estado_invitacion === 'aceptado';
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onToggleContactoDirecto(art.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                          >
-                            {art.contacto_directo ? (
-                              <span className="text-emerald-400 flex items-center gap-1">
-                                <ToggleRight className="w-5 h-5" /> Directo
-                              </span>
-                            ) : (
-                              <span className="text-amber-400 flex items-center gap-1">
-                                <ToggleLeft className="w-5 h-5" /> Asistido
-                              </span>
-                            )}
-                          </button>
+                      return (
+                        <div
+                          key={art.id}
+                          className="p-4 rounded-xl bg-slate-900/80 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Avatar con botón de cambio de foto rápido */}
+                            <label className="relative group w-11 h-11 rounded-full bg-slate-800 border-2 border-amber-500/30 overflow-hidden shrink-0 cursor-pointer shadow-md">
+                              <img
+                                src={art.foto_perfil || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=500'}
+                                alt={art.nombre}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                <Camera className="w-4 h-4 text-amber-300" />
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const uploadedUrl = await uploadImageToBucket(file, 'artistas-imagenes');
+                                    if (uploadedUrl) {
+                                      onUpdateArtista?.(art.id, { foto_perfil: uploadedUrl });
+                                    } else {
+                                      const reader = new FileReader();
+                                      reader.onload = () => {
+                                        if (typeof reader.result === 'string') {
+                                          onUpdateArtista?.(art.id, { foto_perfil: reader.result });
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }
+                                }}
+                              />
+                            </label>
 
-                          {activeRole === 'superadmin' && (
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-white block">{art.nombre}</span>
+                                {isClaimed ? (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    Perfil Vinculado
+                                  </span>
+                                ) : (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Invitación Pendiente
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[11px] text-slate-400 block">
+                                {art.provincia_ciudad || 'Cuba'} • {art.whatsapp_email_contacto || 'Sin correo'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                            {/* Botón Reenviar Invitación */}
                             <button
-                              onClick={() => onDeleteArtista?.(art.id)}
-                              title="Eliminar artista"
-                              className="p-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                              onClick={() => onOpenInvitationModal?.(art)}
+                              title="Enviar / Copiar Enlace de Invitación por Correo"
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition-colors text-[11px] font-semibold flex items-center gap-1"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Mail className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Invitación</span>
                             </button>
-                          )}
+
+                            {/* Botón Alternar Modalidad Contacto Directo */}
+                            <button
+                              onClick={() => onToggleContactoDirecto(art.id)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors bg-slate-800 hover:bg-slate-700 border border-white/10"
+                            >
+                              {art.contacto_directo ? (
+                                <span className="text-emerald-400 flex items-center gap-1">
+                                  <ToggleRight className="w-4 h-4" /> Directo
+                                </span>
+                              ) : (
+                                <span className="text-amber-400 flex items-center gap-1">
+                                  <ToggleLeft className="w-4 h-4" /> Asistido
+                                </span>
+                              )}
+                            </button>
+
+                            {activeRole === 'superadmin' && (
+                              <button
+                                onClick={() => onDeleteArtista?.(art.id)}
+                                title="Eliminar artista"
+                                className="p-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -778,33 +836,68 @@ export function AdminPreviewPanel({
                               : 'bg-slate-950/40 border-dashed border-slate-800 opacity-60'
                           } flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}
                         >
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <strong className="text-sm text-white font-medium">
-                                {c.nombre_encargado}
-                              </strong>
-                              {isSuperAdmin ? (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                                  <ShieldCheck className="w-3 h-3" /> SuperAdmin
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                  Gestor / Coordinador
-                                </span>
-                              )}
+                          <div className="flex items-center gap-3">
+                            <label className="relative group w-11 h-11 rounded-full bg-slate-800 border-2 border-amber-500/30 overflow-hidden shrink-0 cursor-pointer shadow-md">
+                              <img
+                                src={c.foto_perfil || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200'}
+                                alt={c.nombre_encargado}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                <Camera className="w-4 h-4 text-amber-300" />
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const uploadedUrl = await uploadImageToBucket(file, 'artistas-imagenes');
+                                    if (uploadedUrl) {
+                                      onUpdatePlatformContactFoto?.(c.id, uploadedUrl);
+                                    } else {
+                                      const reader = new FileReader();
+                                      reader.onload = () => {
+                                        if (typeof reader.result === 'string') {
+                                          onUpdatePlatformContactFoto?.(c.id, reader.result);
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }
+                                }}
+                              />
+                            </label>
 
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                                  c.activo
-                                    ? 'bg-emerald-500/10 text-emerald-400'
-                                    : 'bg-slate-800 text-slate-400'
-                                }`}
-                              >
-                                {c.activo ? '● Activo' : '○ Inactivo'}
-                              </span>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <strong className="text-sm text-white font-medium">
+                                  {c.nombre_encargado}
+                                </strong>
+                                {isSuperAdmin ? (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                    <ShieldCheck className="w-3 h-3" /> SuperAdmin
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    Gestor / Coordinador
+                                  </span>
+                                )}
+
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                                    c.activo
+                                      ? 'bg-emerald-500/10 text-emerald-400'
+                                      : 'bg-slate-800 text-slate-400'
+                                  }`}
+                                >
+                                  {c.activo ? '● Activo' : '○ Inactivo'}
+                                </span>
+                              </div>
+
+                              <span className="text-xs text-slate-400 block">{c.whatsapp_email}</span>
                             </div>
-
-                            <span className="text-xs text-slate-400 block">{c.whatsapp_email}</span>
                           </div>
 
                           {activeRole === 'superadmin' && (
@@ -978,13 +1071,12 @@ export function AdminPreviewPanel({
                       </div>
 
                       <div>
-                        <label className="text-xs text-slate-400 block mb-1">Foto de Perfil (URL de la Imagen)</label>
-                        <input
-                          type="text"
-                          value={editFoto}
-                          onChange={(e) => setEditFoto(e.target.value)}
-                          placeholder="https://..."
-                          className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                        <ImageUploader
+                          bucket="artistas-imagenes"
+                          multiple={false}
+                          label="Foto de Perfil del Artista (Sube tu fotografía o pega URL)"
+                          currentImages={editFoto ? [editFoto] : []}
+                          onImagesUploaded={(urls) => setEditFoto(urls[0] || '')}
                         />
                       </div>
 

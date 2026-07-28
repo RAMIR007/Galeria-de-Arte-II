@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Obra } from '@/types/database';
+import { Obra, Divisa } from '@/types/database';
 import { ShieldCheck, Eye, Sparkles, Heart } from 'lucide-react';
 import Image from 'next/image';
 
@@ -10,11 +10,28 @@ interface ArtworkCardProps {
   onSelect: (obra: Obra) => void;
   isFavorite?: boolean;
   onToggleFavorite?: (obraId: string) => void;
+  currency?: Divisa;
 }
 
-export function ArtworkCard({ obra, onSelect, isFavorite = false, onToggleFavorite }: ArtworkCardProps) {
+export function ArtworkCard({
+  obra,
+  onSelect,
+  isFavorite = false,
+  onToggleFavorite,
+  currency = 'USD',
+}: ArtworkCardProps) {
   const isContactoDirecto = obra.artista?.contacto_directo ?? false;
   const mainImage = obra.imagenes[0] || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800';
+
+  // Conversión de Divisa (Tasa: 1 USD = 0.92 EUR)
+  const formatPrice = (priceUsd: number | undefined | null) => {
+    if (!priceUsd) return 'Consultar precio';
+    if (currency === 'EUR') {
+      const priceEur = Math.round(priceUsd * 0.92);
+      return `€${priceEur.toLocaleString()} EUR`;
+    }
+    return `$${priceUsd.toLocaleString()} USD`;
+  };
 
   return (
     <div
@@ -33,16 +50,19 @@ export function ArtworkCard({ obra, onSelect, isFavorite = false, onToggleFavori
 
         <div className="absolute inset-0 bg-gradient-to-t from-[#12141a] via-transparent to-transparent opacity-80" />
 
-        {/* Badge: Contacto Directo vs Gestión Asistida */}
+        {/* Badge: Contacto Directo vs Gestión Asistida & Exclusividad */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 backdrop-blur-md">
+            Consignación Exclusiva
+          </span>
           {isContactoDirecto ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
+              <ShieldCheck className="w-3 h-3" />
               Contacto Directo
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-md">
+              <Sparkles className="w-3 h-3" />
               Gestión Asistida
             </span>
           )}
@@ -99,7 +119,7 @@ export function ArtworkCard({ obra, onSelect, isFavorite = false, onToggleFavori
           </span>
           {obra.precio_referencia ? (
             <span className="text-sm font-semibold text-emerald-400">
-              ${obra.precio_referencia.toLocaleString()} USD
+              {formatPrice(obra.precio_referencia)}
             </span>
           ) : (
             <span className="text-xs text-amber-300 italic">Consultar precio</span>

@@ -2,13 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Palette, Shield, User, LogIn, LogOut, Crown, Phone } from 'lucide-react';
-import { RolUsuario, Artista } from '@/types/database';
+import { Palette, User, LogIn, LogOut, Crown, Globe } from 'lucide-react';
+import { RolUsuario, Artista, Divisa } from '@/types/database';
 
 interface NavbarProps {
   currentUserEmail: string | null;
   currentRole: RolUsuario | 'visitante';
   activeArtist: Artista | null;
+  userAvatar?: string | null;
+  currency?: Divisa;
+  onToggleCurrency?: () => void;
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenArtistDashboard: () => void;
@@ -20,6 +23,9 @@ export function Navbar({
   currentUserEmail,
   currentRole,
   activeArtist,
+  userAvatar,
+  currency = 'USD',
+  onToggleCurrency,
   onOpenAuth,
   onLogout,
   onOpenArtistDashboard,
@@ -45,7 +51,7 @@ export function Navbar({
         </Link>
 
         {/* Navigation & Role Badge */}
-        <nav className="flex items-center gap-2.5 sm:gap-5">
+        <nav className="flex items-center gap-2 sm:gap-4">
           <Link
             href="#obras"
             className="text-xs sm:text-sm font-medium text-slate-300 hover:text-amber-400 transition-colors hidden xs:inline"
@@ -59,18 +65,34 @@ export function Navbar({
             Artistas
           </Link>
 
+          {/* Selector de Divisa ($ USD / € EUR) */}
+          {onToggleCurrency && (
+            <button
+              onClick={onToggleCurrency}
+              title={`Cambiar divisa (Actual: ${currency}). Haz clic para conmutar a ${currency === 'USD' ? 'EUR (€)' : 'USD ($)'}`}
+              className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-amber-300 flex items-center gap-1.5 transition-all shadow-sm"
+            >
+              <Globe className="w-3.5 h-3.5 text-amber-400" />
+              <span>{currency === 'USD' ? '$ USD' : '€ EUR'}</span>
+            </button>
+          )}
+
           {/* Estado de Autenticación & Rol */}
           {currentRole === 'superadmin' || currentRole === 'gestor' ? (
             <div className="flex items-center gap-2">
               <button
                 onClick={onToggleAdminPanel}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md ${
+                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all shadow-md ${
                   isAdminPanelOpen
                     ? 'bg-amber-500/30 text-amber-200 border-amber-500/50 ring-1 ring-amber-400'
                     : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
                 }`}
               >
-                <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Admin" className="w-5 h-5 rounded-full object-cover border border-amber-400" />
+                ) : (
+                  <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                )}
                 <span className="hidden sm:inline">Panel SuperAdmin</span>
                 <span className="sm:hidden">Admin</span>
               </button>
@@ -87,9 +109,13 @@ export function Navbar({
             <div className="flex items-center gap-2">
               <button
                 onClick={onOpenArtistDashboard}
-                className="px-3 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-semibold flex items-center gap-1.5 hover:bg-purple-500/30 transition-all shadow-md"
+                className="px-3 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-semibold flex items-center gap-2 hover:bg-purple-500/30 transition-all shadow-md"
               >
-                <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                {activeArtist?.foto_perfil ? (
+                  <img src={activeArtist.foto_perfil} alt={activeArtist.nombre} className="w-5 h-5 rounded-full object-cover border border-purple-400" />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                )}
                 <span className="truncate max-w-[120px] sm:max-w-none">
                   Mi Dashboard ({activeArtist?.nombre.split(' ')[0] || 'Artista'})
                 </span>

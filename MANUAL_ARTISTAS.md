@@ -1,66 +1,67 @@
 # 📘 Manual de Uso para Artistas - Galería Virtual de Arte Cubano
 
-¡Bienvenido(a) a la **Galería Virtual de Arte Cubano**! Esta guía te explicará paso a paso cómo administrar tu portafolio de obras, actualizar tu perfil profesional y gestionar tus preferencias de atención a compradores.
+¡Bienvenido(a) a la **Galería Virtual de Arte Cubano**! Esta guía explica el modelo de representación bajo normas internacionales de galerías de arte, la estructura financiera del 80/20, y cómo administrar tu perfil multimedia y obras en consignación exclusiva.
 
 ---
 
-## 🔑 1. Cómo Iniciar Sesión
+## ⚖️ 1. Modelo de Negocio: Consignación Exclusiva & Comisión 80/20
+
+En concordancia con los estándares internacionales de galerías contemporáneas:
+
+* **Estructura Financiera (80% Artista / 20% Galería):**
+  * Sobre el precio final de venta acordado (ej. **$1,000 USD**):
+    * 🎨 **Retribución Neta al Artista (80%):** **$800 USD**.
+    * 🏛️ **Honorarios Galería (20%):** **$200 USD** (cubre curaduría, marketing internacional, emisión del Certificado de Autenticidad con QR y atención al coleccionista).
+* **Consignación Exclusiva por Obra:**
+  * Las obras que decidas publicar en la plataforma quedan bajo **Contrato de Representación Exclusiva**. No deben ofrecerse simultáneamente en otros canales o galerías mientras permanezcan activas en el catálogo.
+* **Consulta de Contrato Digital:**
+  * En tu Dashboard puedes hacer clic en **"Ver Contrato Consignación"** para revisar e imprimir tu acuerdo legal de representación.
+
+---
+
+## 🔑 2. Cómo Iniciar Sesión
 
 1. Entra a la página web oficial de la Galería.
-2. En la esquina superior derecha de la barra de navegación, haz clic en **"Acceso Creadores"**.
+2. En la barra de navegación superior, haz clic en **"Acceso Creadores"**.
 3. Ingresa tu correo electrónico registrado y tu contraseña.
-4. Una vez autenticado(a), verás aparecer tu botón exclusivo en la barra superior: **`Mi Dashboard (Artista: Tu Nombre)`**.
+4. Una vez autenticado(a), verás el botón: **`Mi Dashboard (Artista: Tu Nombre)`**.
 
 ---
 
-## 🎨 2. Tu Dashboard Privado de Artista
+## 🎨 3. Tu Dashboard Privado de Artista
 
-Al hacer clic en **"Mi Dashboard"**, se desplegará tu centro de control personal. Este panel cuenta con dos pestañas principales:
-
-### Pestaña A: Mis Obras & Portafolio
-En esta sección puedes administrar todas tus piezas publicadas en la Galería:
-
+### Pestaña A: Mis Obras & Portafolio (Consignación Exclusiva)
 - **Publicar Nueva Obra:**
-  1. Haz clic en el botón **"+ Publicar Nueva Obra"**.
-  2. Llena los datos básicos: Título, Técnica (ej. *Óleo sobre lienzo*), Dimensiones (*100 x 80 cm*), Año de creación, Precio de referencia en USD y Descripción de la pieza.
-  3. **Subida de Fotografías:** Haz clic en la zona de carga o arrastra las imágenes de tu obra (soporta formatos JPG, PNG y WEBP).
-  4. Presiona **"Guardar y Publicar Obra"**. Tu creación aparecerá inmediatamente en el catálogo general.
-
-- **Marcar Disponibilidad de Obra:**
-  - Puedes cambiar en cualquier momento el estado de una obra entre **"Disponible"** (para venta) y **"Reservada"** (si está vendida o comprometida) haciendo clic en el botón de estado.
-
-- **Eliminar Obra:**
-  - Si deseas retirar una obra del catálogo, presiona el icono del bote de basura 🗑️.
+  1. Haz clic en **"+ Publicar Nueva Obra"**.
+  2. Completa los datos: Título, Técnica (*Óleo sobre lienzo*), Dimensiones (*120 x 90 cm*), Año de creación y Descripción.
+  3. **Calculadora Financiera 80/20:** Al ingresar el precio en USD, verás automáticamente tu ganancia neta estimada (80%).
+  4. **Subida de Fotografías:** Carga imágenes nítidas de la obra.
+  5. Marca la casilla de confirmación de consignación exclusiva y presiona **"Guardar y Publicar Obra Exclusiva"**.
 
 ---
 
-### Pestaña B: Mi Perfil & Datos de Contacto
-Mantén tu biografía e información profesional actualizada:
+### Pestaña B: Mi Perfil, Video, Fotos & PDFs
+Mantén tu perfil profesional enriquecido para fascinar a los coleccionistas:
 
-1. **Provincia / Ciudad:** Especifica tu lugar de residencia (ej. *La Habana, Cienfuegos, Camagüey*).
-2. **Contacto Personal:** Introduce tu número de WhatsApp con código de país (`+53 ...`) o tu correo electrónico.
-3. **Biografía & Trayectoria:** Describe tu formación artística, técnica distintiva y principales exposiciones individuales o colectivas.
-4. **Foto de Perfil:** Sube tu retrato profesional utilizando el cargador de imágenes.
-5. Haz clic en **"Guardar Cambios de Perfil"**.
-
----
-
-## 🛡️ 3. Modalidad de Atención: Contacto Directo vs Gestión Asistida
-
-En la parte superior de tu Dashboard encontrarás una opción para elegir cómo deseas atender a los compradores interesados en tus obras:
-
-- **Contacto Directo Habilitado (WhatsApp / Email propio):**
-  - Cuando un comprador revise tus obras en el catálogo y presione *"WhatsApp Directo"*, se abrirá una conversación **directamente en tu WhatsApp personal** con un mensaje pre-redactado indicando la obra de su interés.
-
-- **Atención Asistida por la Plataforma:**
-  - Si prefieres que el equipo de la Galería coordine la atención comercial, logística o negociaciones internacionales, activa esta modalidad. Las consultas de compradores llegarán al equipo de coordinación oficial para asistirte en el proceso.
+1. **Biografía sin Límite de Caracteres:** Redacta tu trayectoria artística, formación, influencias y exposiciones en detalle.
+2. **Video de Presentación / Entrevista:** Añade un enlace a tu video de YouTube, Vimeo o MP4 directo.
+3. **Fotos del Taller / Proceso Creativo:** Sube fotografías tuyas trabajando en tu estudio.
+4. **Documentos PDF (Dossier Artístico & CV):** Agrega enlaces a tus documentos PDF descargables.
+5. Presiona **"Guardar Cambios de Perfil Completo"**.
 
 ---
 
-## 💡 Recomendaciones para Maximizar tus Ventas
+## 🛡️ 4. Modalidad de Atención: Contacto Directo vs Gestión Asistida
 
-- **Imágenes de Alta Calidad:** Sube fotografías nítidas y bien iluminadas de tus piezas sin reflejos molestos.
-- **Biografía Completa:** Los coleccionistas e instituciones aprecian conocer la historia y trayectoria del artista.
-- **Mantener Disponibilidad al Día:** Actualiza el estado de tus obras tan pronto sean reservadas o vendidas.
+En la parte superior de tu Dashboard puedes alternar el modo de atención:
 
-¡Si necesitas asistencia técnica, el equipo de administración de la Galería estará gustoso de apoyarte!
+* **Contacto Directo Habilitado (WhatsApp / Email propio):**
+  * Los botones del catálogo redirigen directamente a tu WhatsApp personal con un mensaje pre-redactado indicando la obra de interés.
+* **Atención Asistida por la Galería:**
+  * El equipo de coordinación oficial gestionará las negociaciones, consultas de coleccionistas y envíos internacionales.
+
+---
+
+## 📜 5. Certificados de Autenticidad & Anonimato Institucional
+
+Cada pieza vendida incluye un Certificado de Autenticidad con código QR auditado, respaldado por la **Dirección General - Galería Virtual de Arte Cubano**.
