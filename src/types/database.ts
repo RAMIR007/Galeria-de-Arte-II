@@ -1,4 +1,4 @@
-export type RolUsuario = 'superadmin' | 'gestor' | 'artista';
+export type RolUsuario = 'superadmin' | 'gestor' | 'curador' | 'artista';
 
 export interface UsuarioAdmin {
   id: string;
@@ -31,6 +31,7 @@ export interface Artista {
   fotos_galeria?: string[] | null;
   documentos_pdf?: DocumentoPDF[] | null;
   contrato_firmado?: boolean;
+  comision_porcentaje?: number; // Porcentaje de comisión acordado (Por defecto 20%, personalizable solo por SuperAdmin)
   rol?: RolUsuario;
   invitacion_enviada?: boolean;
   fecha_invitacion?: string;
@@ -68,6 +69,7 @@ export interface ContactoPlataforma {
   activo: boolean;
   fecha_creacion: string;
   rol?: RolUsuario;
+  porcentaje_comision?: number; // Porcentaje de ganancia asignado sobre ventas (ej: 5% para Curador)
 }
 
 export interface FiltrosCatalogo {

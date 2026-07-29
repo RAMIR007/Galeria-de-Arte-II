@@ -262,7 +262,9 @@ export default function Home() {
   const handleAddPlatformContact = (
     nombre: string,
     contacto: string,
-    rol: RolUsuario = 'gestor'
+    rol: RolUsuario = 'gestor',
+    foto?: string,
+    porcentaje_comision?: number
   ) => {
     const newContact: ContactoPlataforma = {
       id: `plat-${Date.now()}`,
@@ -270,6 +272,8 @@ export default function Home() {
       whatsapp_email: contacto,
       activo: true,
       rol: rol,
+      foto_perfil: foto,
+      porcentaje_comision: porcentaje_comision ?? (rol === 'curador' ? 5 : 0),
       fecha_creacion: new Date().toISOString(),
     };
     setPlatformContacts((prev) => [...prev, newContact]);
@@ -287,6 +291,12 @@ export default function Home() {
     );
   };
 
+  const handleChangeContactCommission = (contactId: string, porcentaje: number) => {
+    setPlatformContacts((prev) =>
+      prev.map((c) => (c.id === contactId ? { ...c, porcentaje_comision: porcentaje } : c))
+    );
+  };
+
   const handleDeletePlatformContact = (contactId: string) => {
     setPlatformContacts((prev) => prev.filter((c) => c.id !== contactId));
   };
@@ -299,7 +309,7 @@ export default function Home() {
 
   // Obtener avatar del usuario actual si existe
   const activeUserAvatar =
-    currentRole === 'superadmin' || currentRole === 'gestor'
+    currentRole === 'superadmin' || currentRole === 'gestor' || currentRole === 'curador'
       ? platformContacts.find((c) => c.whatsapp_email.toLowerCase().includes(currentUserEmail?.toLowerCase() || 'ramiro'))?.foto_perfil ||
         platformContacts[0]?.foto_perfil
       : activeArtistDashboard?.foto_perfil;
@@ -411,8 +421,8 @@ export default function Home() {
         onViewArtistDetail={(art) => setSelectedArtistDetail(art)}
       />
 
-      {/* Admin Panel Simulator - Solo visible si SuperAdmin / Gestor o panel activado */}
-      {(currentRole === 'superadmin' || currentRole === 'gestor' || isAdminPanelOpen) && (
+      {/* Admin Panel Simulator - Solo visible si SuperAdmin / Gestor / Curador o panel activado */}
+      {(currentRole === 'superadmin' || currentRole === 'gestor' || currentRole === 'curador' || isAdminPanelOpen) && (
         <AdminPreviewPanel
           artistas={artistas}
           obras={obras}
@@ -421,6 +431,7 @@ export default function Home() {
           onAddPlatformContact={handleAddPlatformContact}
           onToggleContactActive={handleToggleContactActive}
           onChangeContactRole={handleChangeContactRole}
+          onChangeContactCommission={handleChangeContactCommission}
           onDeletePlatformContact={handleDeletePlatformContact}
           onUpdatePlatformContactFoto={handleUpdatePlatformContactFoto}
           onAddArtista={handleAddArtista}

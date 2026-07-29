@@ -99,10 +99,13 @@ export function ArtistDashboardModal({
   // Obras específicas del artista
   const misObras = obras.filter((o) => o.artista_id === artista.id);
 
-  // Calculadora 80/20
+  // Calculadora personalizada según el porcentaje acordado del artista (Modificable solo por SuperAdmin)
+  const galleryFeePct = artista.comision_porcentaje ?? 20;
+  const artistPayoutPct = 100 - galleryFeePct;
+
   const numericPrice = precio ? parseFloat(precio) : 0;
-  const galleryFee = Math.round(numericPrice * 0.2);
-  const artistPayout = Math.round(numericPrice * 0.8);
+  const galleryFee = Math.round(numericPrice * (galleryFeePct / 100));
+  const artistPayout = Math.round(numericPrice * (artistPayoutPct / 100));
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +179,7 @@ export function ArtistDashboardModal({
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-serif font-bold text-white">{artista.nombre}</h2>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Artista Consignado 80/20
+                    Artista Consignado ({artistPayoutPct}/{galleryFeePct})
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -349,15 +352,15 @@ export function ArtistDashboardModal({
                           className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-sm text-emerald-400 font-bold focus:border-amber-500 focus:outline-none mb-2"
                         />
 
-                        {/* Calculadora 80/20 visual */}
+                        {/* Calculadora visual de acuerdo del artista */}
                         {numericPrice > 0 && (
                           <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-white/10">
                             <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300">
-                              <span className="text-[10px] text-slate-400 block">Pago Neto Artista (80%)</span>
+                              <span className="text-[10px] text-slate-400 block">Pago Neto Artista ({artistPayoutPct}%)</span>
                               <strong className="text-sm">${artistPayout.toLocaleString()} USD</strong>
                             </div>
                             <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300">
-                              <span className="text-[10px] text-slate-400 block">Comisión Galería (20%)</span>
+                              <span className="text-[10px] text-slate-400 block">Comisión Galería ({galleryFeePct}%)</span>
                               <strong className="text-sm">${galleryFee.toLocaleString()} USD</strong>
                             </div>
                           </div>
@@ -392,7 +395,7 @@ export function ArtistDashboardModal({
                           onChange={(e) => setAceptaConsignacion(e.target.checked)}
                           className="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-amber-400"
                         />
-                        <span>Acepto publicar esta obra bajo Consignación Exclusiva (80% Artista / 20% Galería)</span>
+                        <span>Acepto publicar esta obra bajo Consignación Exclusiva ({artistPayoutPct}% Artista / {galleryFeePct}% Galería)</span>
                       </label>
                     </div>
 

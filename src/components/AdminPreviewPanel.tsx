@@ -38,9 +38,10 @@ interface AdminPreviewPanelProps {
   obras: Obra[];
   platformContacts: ContactoPlataforma[];
   onToggleContactoDirecto: (artistaId: string) => void;
-  onAddPlatformContact: (nombre: string, contacto: string, rol?: RolUsuario, foto?: string) => void;
+  onAddPlatformContact: (nombre: string, contacto: string, rol?: RolUsuario, foto?: string, porcentaje_comision?: number) => void;
   onToggleContactActive?: (contactId: string) => void;
   onChangeContactRole?: (contactId: string, rol: RolUsuario) => void;
+  onChangeContactCommission?: (contactId: string, porcentaje: number) => void;
   onDeletePlatformContact?: (contactId: string) => void;
   onUpdatePlatformContactFoto?: (contactId: string, fotoUrl: string) => void;
   onAddArtista?: (data: {
@@ -50,6 +51,7 @@ interface AdminPreviewPanelProps {
     foto_perfil?: string;
     whatsapp_email_contacto?: string;
     contacto_directo?: boolean;
+    comision_porcentaje?: number;
   }) => Artista | void;
   onUpdateArtista?: (artistaId: string, updates: Partial<Artista>) => void;
   onDeleteArtista?: (artistaId: string) => void;
@@ -78,6 +80,7 @@ export function AdminPreviewPanel({
   onAddPlatformContact,
   onToggleContactActive,
   onChangeContactRole,
+  onChangeContactCommission,
   onDeletePlatformContact,
   onUpdatePlatformContactFoto,
   onAddArtista,
@@ -94,10 +97,11 @@ export function AdminPreviewPanel({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
-  // Estado para gestión de equipo (Admins / Gestores)
+  // Estado para gestión de equipo (Admins / Gestores / Curadores)
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoContacto, setNuevoContacto] = useState('');
   const [nuevoRol, setNuevoRol] = useState<RolUsuario>('gestor');
+  const [nuevoPorcentajeComision, setNuevoPorcentajeComision] = useState<string>('5');
 
   // Estado para agregar nuevo artista (SuperAdmin / Gestor)
   const [showAddArtist, setShowAddArtist] = useState(false);
@@ -106,6 +110,7 @@ export function AdminPreviewPanel({
   const [artistProvincia, setArtistProvincia] = useState('La Habana');
   const [artistFoto, setArtistFoto] = useState('');
   const [artistContacto, setArtistContacto] = useState('');
+  const [artistComision, setArtistComision] = useState<string>('20');
   const [artistDirecto, setArtistDirecto] = useState(false);
 
   // Estado para agregar nueva obra
@@ -148,16 +153,19 @@ export function AdminPreviewPanel({
   const handleAddGestorSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (nuevoNombre.trim() && nuevoContacto.trim()) {
-      onAddPlatformContact(nuevoNombre, nuevoContacto, nuevoRol);
+      const pct = nuevoPorcentajeComision ? parseFloat(nuevoPorcentajeComision) : 0;
+      onAddPlatformContact(nuevoNombre, nuevoContacto, nuevoRol, undefined, pct);
       setNuevoNombre('');
       setNuevoContacto('');
       setNuevoRol('gestor');
+      setNuevoPorcentajeComision('5');
     }
   };
 
   const handleAddArtistSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (artistNombre.trim()) {
+      const comisionPct = artistComision ? parseFloat(artistComision) : 20;
       const created = onAddArtista?.({
         nombre: artistNombre,
         bio: artistBio,
@@ -165,6 +173,7 @@ export function AdminPreviewPanel({
         foto_perfil: artistFoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=500',
         whatsapp_email_contacto: artistContacto,
         contacto_directo: artistDirecto,
+        comision_porcentaje: comisionPct,
       });
 
       if (created) {
@@ -176,6 +185,7 @@ export function AdminPreviewPanel({
       setArtistProvincia('La Habana');
       setArtistFoto('');
       setArtistContacto('');
+      setArtistComision('20');
       setArtistDirecto(false);
       setShowAddArtist(false);
     }
@@ -362,6 +372,17 @@ export function AdminPreviewPanel({
                 </button>
 
                 <button
+                  onClick={() => setActiveRole('curador')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    activeRole === 'curador'
+                      ? 'bg-sky-500 text-slate-950 font-bold shadow-md'
+                      : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Curador de Arte
+                </button>
+
+                <button
                   onClick={() => {
                     setActiveRole('artista');
                     if (selectedArtistToEdit) {
@@ -382,9 +403,58 @@ export function AdminPreviewPanel({
               </div>
             </div>
 
-            {/* SECCIÓN A: SUPERADMIN / GESTOR (Gestión de Artistas y Equipo) */}
+            {/* SECCIÓN A: SUPERADMIN / GESTOR / CURADOR (Gestión de Artistas y Equipo) */}
             {activeRole !== 'artista' ? (
               <>
+                {/* Resumen de Reparto Financiero Multinivel (Transparencia Interna) */}
+                {(() => {
+                  const curadorContact = platformContacts.find((c) => c.rol === 'curador');
+                  const curadorPct = curadorContact?.porcentaje_comision ?? 5;
+                  const sampleSale = 1000;
+                  const sampleGalleryFeePct = 20;
+                  const sampleArtistPayoutPct = 80;
+
+                  const sampleArtistPayout = (sampleSale * sampleArtistPayoutPct) / 100;
+                  const sampleGalleryTotal = (sampleSale * sampleGalleryFeePct) / 100;
+                  const sampleCuratorPayout = (sampleSale * curadorPct) / 100;
+                  const sampleNetGalleryProfit = Math.max(0, sampleGalleryTotal - sampleCuratorPayout);
+
+                  return (
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 border border-amber-500/30 text-xs space-y-3">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                        <div className="flex items-center gap-2">
+                          <Crown className="w-4 h-4 text-amber-400" />
+                          <span className="font-serif font-bold text-white text-sm">
+                            Calculadora de Reparto Financiero Multinivel (Transparencia Interna)
+                          </span>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                          Solo Visible para SuperAdmin & Equipo
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-center">
+                        <div className="p-2.5 bg-slate-900/80 rounded-lg border border-white/10">
+                          <span className="text-slate-400 text-[10px] block font-semibold">Venta Ejemplo</span>
+                          <strong className="text-sm font-bold text-white">${sampleSale} USD (100%)</strong>
+                        </div>
+                        <div className="p-2.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-300">
+                          <span className="text-[10px] text-slate-400 block font-semibold">Pago Neto Artista ({sampleArtistPayoutPct}%)</span>
+                          <strong className="text-sm font-bold">${sampleArtistPayout} USD</strong>
+                        </div>
+                        <div className="p-2.5 bg-sky-500/10 rounded-lg border border-sky-500/20 text-sky-300">
+                          <span className="text-[10px] text-slate-400 block font-semibold">Honorarios Curador ({curadorPct}%)</span>
+                          <strong className="text-sm font-bold">${sampleCuratorPayout} USD</strong>
+                        </div>
+                        <div className="p-2.5 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-300">
+                          <span className="text-[10px] text-slate-400 block font-semibold">Margen Neto Galería ({sampleGalleryFeePct - curadorPct}%)</span>
+                          <strong className="text-sm font-bold">${sampleNetGalleryProfit} USD</strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Control 1: Gestión y Registro de Artistas */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -456,6 +526,19 @@ export function AdminPreviewPanel({
                             value={artistContacto}
                             onChange={(e) => setArtistContacto(e.target.value)}
                             className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] text-amber-300 font-semibold block mb-1">
+                            Comisión Galería (%) (Solo SuperAdmin)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="20"
+                            value={artistComision}
+                            onChange={(e) => setArtistComision(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-amber-500/40 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500"
                           />
                         </div>
                       </div>
@@ -557,6 +640,20 @@ export function AdminPreviewPanel({
                           </div>
 
                           <div className="flex items-center gap-2 self-end sm:self-auto">
+                            {/* Control de Comisión de Consignación (Solo SuperAdmin) */}
+                            {activeRole === 'superadmin' && (
+                              <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 px-2 py-1 rounded-lg text-xs" title="Porcentaje de Comisión de Galería (Modificable solo por SuperAdmin)">
+                                <span className="text-slate-400 text-[10px]">Fee:</span>
+                                <input
+                                  type="number"
+                                  value={art.comision_porcentaje ?? 20}
+                                  onChange={(e) => onUpdateArtista?.(art.id, { comision_porcentaje: parseFloat(e.target.value) || 20 })}
+                                  className="w-12 bg-slate-900 border border-white/10 text-amber-300 font-bold rounded px-1 text-xs text-center focus:outline-none focus:border-amber-500"
+                                />
+                                <span className="text-amber-400 text-[10px]">%</span>
+                              </div>
+                            )}
+
                             {/* Botón Reenviar Invitación */}
                             <button
                               onClick={() => onOpenInvitationModal?.(art)}
@@ -875,13 +972,17 @@ export function AdminPreviewPanel({
                                 <strong className="text-sm text-white font-medium">
                                   {c.nombre_encargado}
                                 </strong>
-                                {isSuperAdmin ? (
+                                {c.rol === 'curador' ? (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/40 flex items-center gap-1">
+                                    <Crown className="w-3 h-3 text-sky-400" /> Curador ({c.porcentaje_comision || 5}% Ventas)
+                                  </span>
+                                ) : isSuperAdmin ? (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
                                     <ShieldCheck className="w-3 h-3" /> SuperAdmin
                                   </span>
                                 ) : (
                                   <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                    Gestor / Coordinador
+                                    Gestor / Coordinador ({c.porcentaje_comision || 0}% Ventas)
                                   </span>
                                 )}
 
@@ -901,7 +1002,7 @@ export function AdminPreviewPanel({
                           </div>
 
                           {activeRole === 'superadmin' && (
-                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                            <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
                               <button
                                 onClick={() => onToggleContactActive?.(c.id)}
                                 className={`p-2 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1 ${
@@ -920,8 +1021,20 @@ export function AdminPreviewPanel({
                                 className="bg-slate-900 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                               >
                                 <option value="gestor">Rol: Gestor</option>
+                                <option value="curador">Rol: Curador</option>
                                 <option value="superadmin">Rol: SuperAdmin</option>
                               </select>
+
+                              {/* Editar % de comisión para Curador o miembro */}
+                              <div className="flex items-center gap-1 bg-slate-900 border border-white/10 px-2 py-1.5 rounded-lg text-xs" title="Porcentaje asignado sobre ventas">
+                                <span className="text-slate-400 text-[10px]">% Ventas:</span>
+                                <input
+                                  type="number"
+                                  value={c.porcentaje_comision ?? 0}
+                                  onChange={(e) => onChangeContactCommission?.(c.id, parseFloat(e.target.value) || 0)}
+                                  className="w-12 bg-transparent text-sky-300 font-bold text-xs text-center focus:outline-none"
+                                />
+                              </div>
 
                               <button
                                 onClick={() => onDeletePlatformContact?.(c.id)}
@@ -942,13 +1055,13 @@ export function AdminPreviewPanel({
                       className="bg-slate-950/80 p-4 rounded-xl border border-white/10 space-y-3"
                     >
                       <h5 className="text-xs font-semibold uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Agregar Nuevo Administrador o Gestor de Equipo
+                        <Plus className="w-4 h-4" /> Agregar Nuevo Miembro del Equipo (Curador, Gestor o Admin)
                       </h5>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <input
                           type="text"
-                          placeholder="Nombre completo del gestor..."
+                          placeholder="Nombre completo del gestor o curador..."
                           value={nuevoNombre}
                           onChange={(e) => setNuevoNombre(e.target.value)}
                           className="px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -969,9 +1082,21 @@ export function AdminPreviewPanel({
                           onChange={(e) => setNuevoRol(e.target.value as RolUsuario)}
                           className="px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                         >
+                          <option value="curador">Rol: Curador de Arte</option>
                           <option value="gestor">Rol: Gestor / Coordinador</option>
                           <option value="superadmin">Rol: SuperAdmin</option>
                         </select>
+
+                        <div className="flex items-center gap-1.5 bg-slate-900 border border-white/10 px-3 py-2 rounded-lg text-xs">
+                          <span className="text-slate-400 text-[10px] shrink-0">% Ventas:</span>
+                          <input
+                            type="number"
+                            placeholder="5"
+                            value={nuevoPorcentajeComision}
+                            onChange={(e) => setNuevoPorcentajeComision(e.target.value)}
+                            className="w-full bg-transparent text-sky-300 font-bold focus:outline-none text-xs"
+                          />
+                        </div>
                       </div>
 
                       <button

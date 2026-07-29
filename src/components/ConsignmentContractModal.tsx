@@ -63,51 +63,59 @@ export function ConsignmentContractModal({
           </div>
 
           {/* Resumen Interactivo de Condiciones */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 print:grid-cols-3">
-            <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl text-center print:border-slate-300">
-              <DollarSign className="w-4 h-4 text-emerald-400 mx-auto mb-1 print:text-emerald-700" />
-              <span className="text-[11px] text-slate-400 print:text-slate-600 block">Comisión Galería</span>
-              <strong className="text-base text-emerald-400 font-serif font-bold print:text-emerald-800">20% Fee</strong>
-            </div>
-            <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl text-center print:border-slate-300">
-              <Award className="w-4 h-4 text-amber-400 mx-auto mb-1 print:text-amber-700" />
-              <span className="text-[11px] text-slate-400 print:text-slate-600 block">Liquidación Artista</span>
-              <strong className="text-base text-amber-300 font-serif font-bold print:text-amber-800">80% Neto</strong>
-            </div>
-            <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl text-center print:border-slate-300">
-              <ShieldCheck className="w-4 h-4 text-sky-400 mx-auto mb-1 print:text-sky-700" />
-              <span className="text-[11px] text-slate-400 print:text-slate-600 block">Régimen Obras</span>
-              <strong className="text-base text-sky-300 font-serif font-bold print:text-sky-800">Exclusividad Estricta</strong>
-            </div>
-          </div>
+          {(() => {
+            const galleryFeePct = artista.comision_porcentaje ?? 20;
+            const artistPayoutPct = 100 - galleryFeePct;
+            return (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 print:grid-cols-3">
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl text-center print:border-slate-300">
+                    <DollarSign className="w-4 h-4 text-emerald-400 mx-auto mb-1 print:text-emerald-700" />
+                    <span className="text-[11px] text-slate-400 print:text-slate-600 block">Comisión Galería</span>
+                    <strong className="text-base text-emerald-400 font-serif font-bold print:text-emerald-800">{galleryFeePct}% Fee</strong>
+                  </div>
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl text-center print:border-slate-300">
+                    <Award className="w-4 h-4 text-amber-400 mx-auto mb-1 print:text-amber-700" />
+                    <span className="text-[11px] text-slate-400 print:text-slate-600 block">Liquidación Artista</span>
+                    <strong className="text-base text-amber-300 font-serif font-bold print:text-amber-800">{artistPayoutPct}% Neto</strong>
+                  </div>
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl text-center print:border-slate-300">
+                    <ShieldCheck className="w-4 h-4 text-sky-400 mx-auto mb-1 print:text-sky-700" />
+                    <span className="text-[11px] text-slate-400 print:text-slate-600 block">Régimen Obras</span>
+                    <strong className="text-base text-sky-300 font-serif font-bold print:text-sky-800">Exclusividad Acordada</strong>
+                  </div>
+                </div>
 
-          {/* Cláusulas */}
-          <div className="space-y-4 text-xs sm:text-sm">
-            <h3 className="font-serif font-bold text-amber-300 print:text-black text-base border-b border-amber-500/20 pb-1">
-              CLÁUSULA PRIMERA: OBJETO Y ALCANCE DE LA EXCLUSIVIDAD
-            </h3>
-            <p>
-              El artista <strong className="text-white print:text-black">{artista.nombre}</strong> consigna en favor de la <strong className="text-white print:text-black">Galería Virtual de Arte Cubano</strong> el derecho exclusivo de representación comercial, exhibición digital y venta de las obras consignadas y publicadas en el catálogo oficial de la plataforma. El artista garantiza que las piezas consignadas no estarán simultáneamente ofrecidas en otras galerías o canales sin acuerdo previo.
-            </p>
+                {/* Cláusulas */}
+                <div className="space-y-4 text-xs sm:text-sm">
+                  <h3 className="font-serif font-bold text-amber-300 print:text-black text-base border-b border-amber-500/20 pb-1">
+                    CLÁUSULA PRIMERA: OBJETO Y ALCANCE DE LA EXCLUSIVIDAD
+                  </h3>
+                  <p>
+                    El artista <strong className="text-white print:text-black">{artista.nombre}</strong> consigna en favor de la <strong className="text-white print:text-black">Galería Virtual de Arte Cubano</strong> el derecho exclusivo de representación comercial, exhibición digital y venta de las obras consignadas y publicadas en el catálogo oficial de la plataforma. El artista garantiza que las piezas consignadas no estarán simultáneamente ofrecidas en otras galerías o canales sin acuerdo previo.
+                  </p>
 
-            <h3 className="font-serif font-bold text-amber-300 print:text-black text-base border-b border-amber-500/20 pb-1">
-              CLÁUSULA SEGUNDA: ESTRUCTURA FINANCIERA Y LIQUIDACIÓN (80% / 20%)
-            </h3>
-            <p>
-              Sobre el precio final de venta acordado entre la Galería y el comprador:
-            </p>
-            <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300 print:text-black">
-              <li><strong>Comisión de Galería (20%):</strong> Retenido por la plataforma para cubrir los gastos de curaduría, certificación de autenticidad, marketing digital y gestión al coleccionista.</li>
-              <li><strong>Monto Neto del Artista (80%):</strong> Liquidado al artista en un plazo no mayor a 7 a 14 días hábiles posteriores a la confirmación del pago del coleccionista.</li>
-            </ul>
+                  <h3 className="font-serif font-bold text-amber-300 print:text-black text-base border-b border-amber-500/20 pb-1">
+                    CLÁUSULA SEGUNDA: ESTRUCTURA FINANCIERA Y LIQUIDACIÓN ({artistPayoutPct}% / {galleryFeePct}%)
+                  </h3>
+                  <p>
+                    Sobre el precio final de venta acordado entre la Galería y el comprador:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 pl-2 text-slate-300 print:text-black">
+                    <li><strong>Comisión de Galería ({galleryFeePct}%):</strong> Retenido por la plataforma para cubrir los gastos de curaduría, certificación de autenticidad, marketing digital y gestión al coleccionista.</li>
+                    <li><strong>Monto Neto del Artista ({artistPayoutPct}%):</strong> Liquidado al artista en un plazo no mayor a 7 a 14 días hábiles posteriores a la confirmación del pago del coleccionista.</li>
+                  </ul>
 
-            <h3 className="font-serif font-bold text-amber-300 print:text-black text-base border-b border-amber-500/20 pb-1">
-              CLÁUSULA TERCERA: CERTIFICACIÓN Y GARANTÍA DE AUTENTICIDAD
-            </h3>
-            <p>
-              Toda obra vendida contará con un Certificado de Autenticidad respaldado por la <strong className="text-white print:text-black">Dirección General de la Galería</strong> con código QR de verificación auditada. El artista garantiza la autoría original e inalienable de las obras publicadas.
-            </p>
-          </div>
+                  <h3 className="font-serif font-bold text-amber-300 print:text-black text-base border-b border-amber-500/20 pb-1">
+                    CLÁUSULA TERCERA: CERTIFICACIÓN Y GARANTÍA DE AUTENTICIDAD
+                  </h3>
+                  <p>
+                    Toda obra vendida contará con un Certificado de Autenticidad respaldado por la <strong className="text-white print:text-black">Dirección General de la Galería</strong> con código QR de verificación auditada. El artista garantiza la autoría original e inalienable de las obras publicadas.
+                  </p>
+                </div>
+              </>
+            );
+          })()}
 
           {/* Firmas al pie */}
           <div className="pt-8 grid grid-cols-2 gap-8 text-center border-t border-white/10 print:border-slate-400 mt-6">

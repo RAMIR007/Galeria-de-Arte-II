@@ -3,16 +3,30 @@ import { Artista, Obra, ContactoPlataforma } from '@/types/database';
 export const MOCK_CONTACTOS_PLATAFORMA: ContactoPlataforma[] = [
   {
     id: 'plat-1',
-    nombre_encargado: 'Dirección General de Curaduría',
+    nombre_encargado: 'Dirección General (SuperAdmin)',
     whatsapp_email: '+53 5200 1122 | contacto@galeriacubana.art',
     activo: true,
+    rol: 'superadmin',
+    porcentaje_comision: 15,
     fecha_creacion: '2026-07-24T10:00:00Z',
   },
   {
     id: 'plat-2',
+    nombre_encargado: 'Curador Principal de Arte',
+    whatsapp_email: 'curaduria@galeriacubana.art',
+    activo: true,
+    rol: 'curador',
+    porcentaje_comision: 5,
+    foto_perfil: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200',
+    fecha_creacion: '2026-07-25T10:00:00Z',
+  },
+  {
+    id: 'plat-3',
     nombre_encargado: 'Atención al Coleccionista',
     whatsapp_email: 'ventas@galeriacubana.art',
     activo: true,
+    rol: 'gestor',
+    porcentaje_comision: 0,
     fecha_creacion: '2026-07-24T10:00:00Z',
   },
 ];
@@ -40,6 +54,7 @@ Su lenguaje visual indaga en la espiritualidad, el budismo, el folclore afrocuba
       { titulo: 'Currículum Vitae & Exposiciones (PDF)', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
     ],
     contrato_firmado: true,
+    comision_porcentaje: 20,
     fecha_registro: '2026-07-20T12:00:00Z',
   },
   {

@@ -78,7 +78,7 @@ export function Navbar({
           )}
 
           {/* Estado de Autenticación & Rol */}
-          {currentRole === 'superadmin' || currentRole === 'gestor' ? (
+          {currentRole === 'superadmin' || currentRole === 'gestor' || currentRole === 'curador' ? (
             <div className="flex items-center gap-2">
               <button
                 onClick={onToggleAdminPanel}
@@ -93,7 +93,7 @@ export function Navbar({
                 ) : (
                   <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 )}
-                <span className="hidden sm:inline">Panel SuperAdmin</span>
+                <span className="hidden sm:inline">Panel Admin / Equipo</span>
                 <span className="sm:hidden">Admin</span>
               </button>
 

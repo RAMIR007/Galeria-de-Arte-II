@@ -8,15 +8,18 @@ Este manual contiene las instrucciones operativas completas para la administraci
 
 ---
 
-## 🏛️ 1. Modelo Comercial: Comisión 80/20 & Consignación Exclusiva
+## 🏛️ 1. Modelo Comercial: Consignación Variable, Privacidad & Reparto
 
-* **Regla de Negocio (Norma Internacional):**
-  * Toda obra catalogada se maneja bajo el régimen de **Consignación Exclusiva por Obra**.
-  * De la venta final: la **Galería retiene el 20%** (gastos de plataforma, curaduría, certificación y marketing) y liquida el **80% neto al artista**.
-* **Contrato Digital de Consignación:**
-  * Accesible e imprimible directamente en el panel del artista y superadmin (`ConsignmentContractModal.tsx`).
-* **Anonimato e Identidad Institucional:**
-  * Los certificados de autenticidad y documentos oficiales están firmados bajo la credencial anónima **"Dirección General - Galería Virtual de Arte Cubano"**.
+* **Regla de Negocio Flexible (Personalizable por el SuperAdmin):**
+  * Las obras se manejan bajo el régimen de **Consignación Exclusiva acordada con el Artista**.
+  * El porcentaje de comisión de la galería **NO es fijo**: es personalizable únicamente por el SuperAdmin para cada artista (ej. 20%, 15%, 10%, etc.).
+  * **Privacidad Estricta de Datos Financieros:**
+    * Los coleccionistas y usuarios públicos únicamente ven el **precio de venta final** ($ USD / € EUR) sin ningún porcentaje ni comisión expuesta.
+    * Los artistas únicamente ven su **propio porcentaje** y contrato en su portal privado, jamás el de otros artistas.
+    * El SuperAdmin, Gestores y Curador tienen acceso al desglose completo de repartos en el Panel Admin.
+* **Rol de Curador & Porcentaje sobre Ventas:**
+  * El SuperAdmin puede registrar a un **Curador de Arte** y asignarle un porcentaje específico de comisión sobre las ventas realizadas (ej. 5% de las ventas).
+  * La calculadora multinivel refleja automáticamente la división: **Pago Neto Artista**, **Honorarios Curador** y **Margen Neto Galería**.
 
 ---
 
@@ -30,10 +33,11 @@ Este manual contiene las instrucciones operativas completas para la administraci
 
 ## 🛠️ 3. Módulos del Panel de Control Global
 
-### Módulo 1: Gestión de Artistas & Perfiles Multimedia
+### Módulo 1: Gestión de Artistas & Permisos de Comisión
+- **Ajustar comisión por artista:**
+  - En la lista de artistas, el SuperAdmin dispone del selector `Fee: X%` para modificar el porcentaje asignado a ese creador.
 - **Dar de alta nuevo artista:**
-  - Presiona **"+ Dar de Alta Nuevo Artista"**.
-  - Rellena nombre, ciudad/provincia, foto de perfil, WhatsApp/Email, video de presentación (YouTube/Vimeo/MP4), fotos de taller y archivos PDF.
+  - Presiona **"+ Agregar Nuevo Artista"** e ingresa el porcentaje de comisión acordado (por defecto 20%).
 - **Alternar Modo de Contacto Directo:**
   - **Directo (Verde):** Las consultas de WhatsApp de sus obras van directo al teléfono personal del artista.
   - **Asistido (Amarillo):** Las consultas van dirigidas a la atención de la plataforma.
@@ -42,14 +46,14 @@ Este manual contiene las instrucciones operativas completas para la administraci
 
 ### Módulo 2: Control y Curaduría de Obras en Catálogo
 - **Publicar obras en consignación exclusiva:**
-  - Ingresa título, técnica, medidas, año, precio de referencia en USD y carga las fotos.
-  - El sistema muestra el desglose dinámico: **Precio Venta (100%)**, **Comisión Galería (20%)** y **Neto Artista (80%)**.
+  - Ingresa título, técnica, medidas, año y precio de referencia en USD.
+  - El sistema desglosa los valores según la tasa de comisión específica del artista.
 
 ---
 
-### Módulo 3: Equipo de Gestión & Atendientes Oficiales
-- **Registrar miembro del equipo:**
-  - Registra gestores o coordinadores con su número de WhatsApp/Email de contacto.
+### Módulo 3: Equipo de Gestión & Curador de Arte
+- **Registrar miembro del equipo o Curador:**
+  - Registra a gestores o al **Curador de Arte** seleccionando su rol y asignando su porcentaje de comisión por ventas (`% Ventas`, ej. 5%).
 
 ---
 
